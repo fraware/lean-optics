@@ -1,0 +1,127 @@
+name: CI
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+        lean-version: [v4.8.0, v4.7.0]
+
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Lean ${{ matrix.lean-version }}
+      uses: leanprover/lean-setup@v0.2
+      with:
+        lean-version: ${{ matrix.lean-version }}
+    
+    - name: Build
+      run: lake build
+    
+    - name: Run tests
+      run: lake test
+    
+    - name: Run benchmarks
+      run: lake exe bench
+    
+    - name: Generate documentation
+      run: lake build docs
+
+  performance:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0  # Fetch full history for baseline comparison
+    
+    - name: Set up Lean
+      uses: leanprover/lean-setup@v0.2
+      with:
+        lean-version: v4.8.0
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.9'
+    
+    - name: Install Python dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install statistics
+    
+    - name: Run performance validation
+      run: |
+        python scripts/validate_performance.py
+        echo "Performance validation completed"
+    
+    - name: Download baseline metrics
+      uses: actions/download-artifact@v4
+      with:
+        name: baseline-metrics
+        path: baseline/
+      continue-on-error: true
+    
+    - name: Upload current benchmark results
+      uses: actions/upload-artifact@v4
+      with:
+        name: benchmark-results-${{ github.sha }}
+        path: benchmark_results.json
+        retention-days: 30
+    
+    - name: Upload performance report
+      uses: actions/upload-artifact@v4
+      with:
+        name: performance-report-${{ github.sha }}
+        path: performance_report.txt
+        retention-days: 30
+    
+    - name: Update baseline metrics
+      if: success()
+      run: |
+        mkdir -p baseline
+        cp benchmark_results.json baseline/baseline_metrics.json
+    
+    - name: Upload updated baseline
+      uses: actions/upload-artifact@v4
+      with:
+        name: baseline-metrics
+        path: baseline/baseline_metrics.json
+        retention-days: 90
+
+  release:
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: [build, performance]
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Lean
+      uses: leanprover/lean-setup@v0.2
+      with:
+        lean-version: v4.8.0
+    
+    - name: Build and package
+      run: |
+        lake build
+        lake test
+        lake build docs
+    
+    - name: Create release
+      uses: actions/create-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        tag_name: ${{ github.ref }}
+        release_name: Release ${{ github.ref }}
+        draft: false
+        prerelease: false
