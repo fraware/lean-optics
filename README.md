@@ -1,4 +1,5 @@
 <div align="center">
+  
 # Lean Optics
 
 **Optics over profunctors with law-carrying composition and automation**
