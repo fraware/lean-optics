@@ -1,0 +1,227 @@
+# Lean Optics - Windows Makefile for Development and Distribution
+# ===============================================================
+
+# Variables
+PROJECT_NAME := lean-optics
+VERSION := 1.0.0
+DOCKER_IMAGE := ghcr.io/fraware/lean-optics
+DOCKER_TAG := $(VERSION)
+DOCKER_LATEST := $(DOCKER_IMAGE):latest
+DOCKER_VERSIONED := $(DOCKER_IMAGE):$(DOCKER_TAG)
+
+# Default target
+.PHONY: help
+help:
+	@echo Lean Optics - Available Commands
+	@echo ==================================
+	@echo make dev     - Set up local development environment
+	@echo make run     - Run the application/CLI locally
+	@echo make test    - Run the test suite
+	@echo make bench   - Run performance benchmarks
+	@echo make docs    - Generate documentation
+	@echo make clean   - Clean build artifacts
+	@echo make version - Show version information
+	@echo make quickstart - Complete quickstart for new users
+
+# Development targets
+.PHONY: dev
+dev:
+	@echo Setting up development environment...
+	@where lake >nul 2>&1
+	@if %errorlevel% neq 0 (
+		echo Error: Lake not found. Please install Lean 4 first.
+		echo Visit: https://leanprover.github.io/lean4/doc/setup.html
+		exit /b 1
+	)
+	@echo Installing dependencies...
+	lake build
+	@echo Building project...
+	lake build
+	@echo Development environment ready!
+
+.PHONY: run
+run: dev
+	@echo Running Lean Optics...
+	@echo.
+	lake exe lean-optics
+	@echo.
+	@echo Lean Optics executed successfully!
+
+.PHONY: test
+test: dev
+	@echo Running test suite...
+	@echo.
+	lake exe test-runner
+	@echo.
+	@echo All tests completed!
+
+.PHONY: test-comprehensive
+test-comprehensive: dev
+	@echo Running comprehensive test suite...
+	@echo.
+	scripts\test.bat
+	@echo.
+	@echo Comprehensive tests completed!
+
+.PHONY: test-verbose
+test-verbose: dev
+	@echo Running verbose test suite...
+	@echo.
+	lake build Tests
+	lake exe test-lens
+	lake exe test-prism
+	lake exe test-traversal
+	lake exe test-compose
+	lake exe test-runner
+	@echo.
+	@echo All tests completed!
+
+.PHONY: bench
+bench: dev
+	@echo Running performance benchmarks...
+	@echo.
+	lake exe bench
+	@echo.
+	@echo Benchmarks completed!
+
+.PHONY: docs
+docs: dev
+	@echo Generating documentation...
+	@echo.
+	lake build docs
+	@echo.
+	@echo Documentation generated!
+
+# Docker targets
+.PHONY: docker-build
+docker-build:
+	@echo Building Docker image...
+	docker build -t $(DOCKER_VERSIONED) -t $(DOCKER_LATEST) .
+	@echo Docker image built: $(DOCKER_VERSIONED)
+
+.PHONY: docker-run
+docker-run: docker-build
+	@echo Running Lean Optics in Docker...
+	@echo.
+	docker run --rm $(DOCKER_LATEST)
+	@echo.
+	@echo Docker run completed!
+
+.PHONY: docker-test
+docker-test: docker-build
+	@echo Running tests in Docker...
+	@echo.
+	docker run --rm $(DOCKER_LATEST) test
+	@echo.
+	@echo Docker tests completed!
+
+.PHONY: docker-push
+docker-push: docker-build
+	@echo Pushing Docker image to registry...
+	docker push $(DOCKER_VERSIONED)
+	docker push $(DOCKER_LATEST)
+	@echo Docker image pushed!
+
+# Release targets
+.PHONY: release
+release:
+	@echo Preparing release...
+	@echo.
+	@echo Step 1: Running full test suite...
+	$(MAKE) test
+	@echo.
+	@echo Step 2: Running benchmarks...
+	$(MAKE) bench
+	@echo.
+	@echo Step 3: Building Docker image...
+	$(MAKE) docker-build
+	@echo.
+	@echo Step 4: Testing Docker image...
+	$(MAKE) docker-test
+	@echo.
+	@echo Release preparation complete!
+	@echo.
+	@echo To publish the release:
+	@echo 1. Push Docker image: make docker-push
+	@echo 2. Create GitHub release with tag: v$(VERSION)
+	@echo 3. Update documentation with new version
+
+.PHONY: release-dry-run
+release-dry-run:
+	@echo Running release dry-run...
+	$(MAKE) release
+	@echo Dry-run completed successfully!
+
+# Utility targets
+.PHONY: clean
+clean:
+	@echo Cleaning build artifacts...
+	lake clean
+	docker rmi $(DOCKER_VERSIONED) $(DOCKER_LATEST) 2>nul || echo Docker images not found
+	@echo Clean completed!
+
+.PHONY: check-deps
+check-deps:
+	@echo Checking dependencies...
+	@where lake >nul 2>&1
+	@if %errorlevel% equ 0 (
+		echo [OK] Lake found
+	) else (
+		echo [ERROR] Lake not found
+		echo Install Lean 4: https://leanprover.github.io/lean4/doc/setup.html
+		exit /b 1
+	)
+	@where docker >nul 2>&1
+	@if %errorlevel% equ 0 (
+		echo [OK] Docker found
+	) else (
+		echo [WARNING] Docker not found (optional for containerized runs)
+	)
+
+.PHONY: version
+version:
+	@echo Lean Optics Version Information
+	@echo ==================================
+	@echo Project: $(PROJECT_NAME)
+	@echo Version: $(VERSION)
+	@echo Docker Image: $(DOCKER_VERSIONED)
+	@lake --version 2>nul || echo Lake version not available
+
+# Quick start targets for new users
+.PHONY: quickstart
+quickstart:
+	@echo Lean Optics Quickstart
+	@echo ======================
+	@echo.
+	@echo 1. Checking dependencies...
+	$(MAKE) check-deps
+	@echo.
+	@echo 2. Setting up development environment...
+	$(MAKE) dev
+	@echo.
+	@echo 3. Running the application...
+	$(MAKE) run
+	@echo.
+	@echo 4. Running tests...
+	$(MAKE) test
+	@echo.
+	@echo Quickstart completed successfully!
+	@echo.
+	@echo Next steps:
+	@echo - Explore the documentation: make docs
+	@echo - Run benchmarks: make bench
+	@echo - Try Docker: make docker-run
+
+# CI/CD targets
+.PHONY: ci-test
+ci-test:
+	@echo Running CI tests...
+	$(MAKE) test
+	@echo CI tests passed!
+
+.PHONY: ci-release
+ci-release:
+	@echo Running CI release...
+	$(MAKE) release
+	$(MAKE) docker-push
+	@echo CI release completed!

@@ -1,0 +1,75 @@
+version: "3.8"
+
+services:
+  lean-optics:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: ghcr.io/fraware/lean-optics:latest
+    container_name: lean-optics
+    command: ["help"]
+    volumes:
+      # Mount source code for development (optional)
+      - ./src:/opt/lean-optics/src:ro
+      - ./tests:/opt/lean-optics/tests:ro
+      - ./docs:/opt/lean-optics/docs:ro
+    environment:
+      - LEAN_PATH=/opt/lean-optics/build/lib
+    networks:
+      - lean-optics-network
+
+  # Development service with live reloading
+  lean-optics-dev:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: ghcr.io/fraware/lean-optics:dev
+    container_name: lean-optics-dev
+    command: ["bash", "-c", "while true; do sleep 30; done"]
+    volumes:
+      - .:/opt/lean-optics
+    environment:
+      - LEAN_PATH=/opt/lean-optics/build/lib
+    networks:
+      - lean-optics-network
+    profiles:
+      - dev
+
+  # Test runner service
+  lean-optics-test:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: ghcr.io/fraware/lean-optics:test
+    container_name: lean-optics-test
+    command: ["test"]
+    volumes:
+      - ./tests:/opt/lean-optics/tests:ro
+    environment:
+      - LEAN_PATH=/opt/lean-optics/build/lib
+    networks:
+      - lean-optics-network
+
+  # Benchmark service
+  lean-optics-bench:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: ghcr.io/fraware/lean-optics:bench
+    container_name: lean-optics-bench
+    command: ["bench"]
+    volumes:
+      - ./bench:/opt/lean-optics/bench:ro
+    environment:
+      - LEAN_PATH=/opt/lean-optics/build/lib
+    networks:
+      - lean-optics-network
+
+networks:
+  lean-optics-network:
+    driver: bridge
+# Usage examples:
+# docker-compose up lean-optics                    # Run help command
+# docker-compose up lean-optics-test              # Run tests
+# docker-compose up lean-optics-bench             # Run benchmarks
+# docker-compose --profile dev up lean-optics-dev # Development container

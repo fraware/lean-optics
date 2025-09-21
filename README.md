@@ -17,9 +17,41 @@
 
 Lean Optics provides an implementation of profunctor optics for Lean 4, featuring law-carrying composition, automated proof generation, and production-ready performance guarantees. Built on solid mathematical foundations, it offers a clean API for working with lenses, prisms, and traversals in functional programming.
 
-## Quick Start
+## Quickstart
 
-### Installation
+Get up and running with Lean Optics in under 10 minutes.
+
+### Option 1: Docker (Recommended for Quick Testing)
+
+```bash
+# Run the library with help
+docker run --rm ghcr.io/fraware/lean-optics:latest
+
+# Run tests
+docker run --rm ghcr.io/fraware/lean-optics:latest test
+
+# Run benchmarks
+docker run --rm ghcr.io/fraware/lean-optics:latest bench
+```
+
+### Option 2: Local Development
+
+```bash
+# Clone and setup (requires Lean 4)
+git clone https://github.com/fraware/lean-optics.git
+cd lean-optics
+
+# One-command setup and test
+make quickstart
+
+# Or step by step:
+make dev     # Setup development environment
+make run     # Run the application
+make test    # Run test suite
+make bench   # Run benchmarks
+```
+
+### Option 3: Add to Your Project
 
 Add to your `lakefile.lean`:
 
@@ -28,7 +60,7 @@ require lean-optics from git
   "https://github.com/fraware/lean-optics.git" @ "main"
 ```
 
-### Basic Usage
+Then use in your code:
 
 ```lean
 import Optics

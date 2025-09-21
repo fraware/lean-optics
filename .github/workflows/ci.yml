@@ -1,127 +1,144 @@
-name: CI
+name: CI/CD Pipeline
 
 on:
   push:
-    branches: [ main, develop ]
+    branches: [main, develop]
   pull_request:
-    branches: [ main ]
+    branches: [main]
+  release:
+    types: [published]
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: fraware/lean-optics
 
 jobs:
-  build:
-    runs-on: ${{ matrix.os }}
-    strategy:
-      matrix:
-        os: [ubuntu-latest, macos-latest]
-        lean-version: [v4.8.0, v4.7.0]
-
-    steps:
-    - uses: actions/checkout@v4
-    
-    - name: Set up Lean ${{ matrix.lean-version }}
-      uses: leanprover/lean-setup@v0.2
-      with:
-        lean-version: ${{ matrix.lean-version }}
-    
-    - name: Build
-      run: lake build
-    
-    - name: Run tests
-      run: lake test
-    
-    - name: Run benchmarks
-      run: lake exe bench
-    
-    - name: Generate documentation
-      run: lake build docs
-
-  performance:
+  test:
+    name: Test Suite
     runs-on: ubuntu-latest
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-    
+
     steps:
-    - uses: actions/checkout@v4
-      with:
-        fetch-depth: 0  # Fetch full history for baseline comparison
-    
-    - name: Set up Lean
-      uses: leanprover/lean-setup@v0.2
-      with:
-        lean-version: v4.8.0
-    
-    - name: Set up Python
-      uses: actions/setup-python@v4
-      with:
-        python-version: '3.9'
-    
-    - name: Install Python dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install statistics
-    
-    - name: Run performance validation
-      run: |
-        python scripts/validate_performance.py
-        echo "Performance validation completed"
-    
-    - name: Download baseline metrics
-      uses: actions/download-artifact@v4
-      with:
-        name: baseline-metrics
-        path: baseline/
-      continue-on-error: true
-    
-    - name: Upload current benchmark results
-      uses: actions/upload-artifact@v4
-      with:
-        name: benchmark-results-${{ github.sha }}
-        path: benchmark_results.json
-        retention-days: 30
-    
-    - name: Upload performance report
-      uses: actions/upload-artifact@v4
-      with:
-        name: performance-report-${{ github.sha }}
-        path: performance_report.txt
-        retention-days: 30
-    
-    - name: Update baseline metrics
-      if: success()
-      run: |
-        mkdir -p baseline
-        cp benchmark_results.json baseline/baseline_metrics.json
-    
-    - name: Upload updated baseline
-      uses: actions/upload-artifact@v4
-      with:
-        name: baseline-metrics
-        path: baseline/baseline_metrics.json
-        retention-days: 90
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install Lean 4
+        uses: leanprover/lean4-action@v1
+        with:
+          lean_version: 4.8.0
+
+      - name: Cache Lake dependencies
+        uses: actions/cache@v3
+        with:
+          path: .lake/packages
+          key: lake-packages-${{ hashFiles('lakefile.lean') }}
+          restore-keys: |
+            lake-packages-
+
+      - name: Install dependencies
+        run: lake build
+
+      - name: Run tests
+        run: make test
+
+      - name: Run benchmarks
+        run: make bench
+
+      - name: Generate documentation
+        run: make docs
+
+  docker-build:
+    name: Build Docker Image
+    runs-on: ubuntu-latest
+    needs: test
+    if: github.event_name == 'push' || github.event_name == 'release'
+
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=ref,event=branch
+            type=ref,event=pr
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=semver,pattern={{major}}
+            type=raw,value=latest,enable={{is_default_branch}}
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  docker-test:
+    name: Test Docker Image
+    runs-on: ubuntu-latest
+    needs: docker-build
+    if: github.event_name == 'push' || github.event_name == 'release'
+
+    steps:
+      - name: Test Docker image
+        run: |
+          docker run --rm ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest help
+          docker run --rm ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest version
+          docker run --rm ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest info
 
   release:
+    name: Create Release
     runs-on: ubuntu-latest
-    if: startsWith(github.ref, 'refs/tags/v')
-    needs: [build, performance]
-    
+    needs: [test, docker-build, docker-test]
+    if: github.event_name == 'release'
+
+    permissions:
+      contents: write
+
     steps:
-    - uses: actions/checkout@v4
-    
-    - name: Set up Lean
-      uses: leanprover/lean-setup@v0.2
-      with:
-        lean-version: v4.8.0
-    
-    - name: Build and package
-      run: |
-        lake build
-        lake test
-        lake build docs
-    
-    - name: Create release
-      uses: actions/create-release@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        tag_name: ${{ github.ref }}
-        release_name: Release ${{ github.ref }}
-        draft: false
-        prerelease: false
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Create Release Notes
+        run: |
+          echo "## Lean Optics Release ${{ github.event.release.tag_name }}" >> release_notes.md
+          echo "" >> release_notes.md
+          echo "### Docker Image" >> release_notes.md
+          echo "\`\`\`bash" >> release_notes.md
+          echo "docker run --rm ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.event.release.tag_name }}" >> release_notes.md
+          echo "\`\`\`" >> release_notes.md
+          echo "" >> release_notes.md
+          echo "### Installation" >> release_notes.md
+          echo "Add to your \`lakefile.lean\`:" >> release_notes.md
+          echo "\`\`\`lean" >> release_notes.md
+          echo "require lean-optics from git" >> release_notes.md
+          echo "  \"https://github.com/fraware/lean-optics.git\" @ \"${{ github.event.release.tag_name }}\"" >> release_notes.md
+          echo "\`\`\`" >> release_notes.md
+
+      - name: Update Release
+        uses: softprops/action-gh-release@v1
+        with:
+          body_path: release_notes.md
+          files: |
+            release_notes.md

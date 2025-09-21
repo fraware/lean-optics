@@ -12,6 +12,18 @@ import Tests.Traversal.Basic
 import Tests.Compose.Basic
 import Tests.Integration
 
+-- Test data structures
+structure Address where
+  street : String
+  city : String
+  zip : String
+
+structure Person where
+  name : String
+  age : Nat
+  email : String
+  address : Address
+
 -- Test result tracking
 structure TestResult where
   name : String
@@ -61,7 +73,12 @@ def runLensTests : IO TestRunner := do
 
   -- Test basic lens operations
   try
-    let testPerson : Person := { name := "Alice", age := 30, email := "alice@example.com" }
+    let testPerson : Person := {
+      name := "Alice",
+      age := 30,
+      email := "alice@example.com",
+      address := { street := "Main St", city := "Anytown", zip := "12345" }
+    }
     let nameLens : Lens Person String := lens! Person.name (fun p n => { p with name := n })
 
     -- Test get operation
@@ -157,7 +174,7 @@ def runCompositionTests : IO TestRunner := do
     let streetLens' : Lens Person String := streetLens ∘ₗ addressLens
 
     let testPerson : Person :=
-      { name := "Alice", age := 30, address := { street := "Main St", city := "Anytown", zip := "12345" } }
+      { name := "Alice", age := 30, email := "alice@example.com", address := { street := "Main St", city := "Anytown", zip := "12345" } }
 
     let street := streetLens'.get testPerson
     if street != "Main St" then
@@ -182,7 +199,12 @@ def runIntegrationTests : IO TestRunner := do
     let lensPrismComp : Lens (Option Person) String :=
       lens_prism_comp nameLens maybePrism "Unknown"
 
-    let testPerson : Person := { name := "Alice", age := 30, email := "alice@example.com" }
+    let testPerson : Person := {
+      name := "Alice",
+      age := 30,
+      email := "alice@example.com",
+      address := { street := "Main St", city := "Anytown", zip := "12345" }
+    }
     let somePerson := some testPerson
     let nonePerson : Option Person := none
 
