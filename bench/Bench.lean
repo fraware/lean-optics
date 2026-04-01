@@ -1,4 +1,4 @@
-/-!
+/-
 # Performance Benchmarks
 
 This module provides performance benchmarks for the lean-optics library.
@@ -51,39 +51,39 @@ def listTraversal {A : Type} : Traversal (List A) A :=
     match xs with
     | [] => pure []
     | x :: xs => do
-      let y ← f x
-      let ys ← listTraversal.traverse f xs
+      let y â† f x
+      let ys â† listTraversal.traverse f xs
       pure (y :: ys))
 
 -- Benchmark functions
 def benchmarkLensOperations (n : Nat) : IO Unit := do
   let person := { name := "Alice", age := 30, email := "alice@example.com" }
-  let start := ← IO.monoMsNow
+  let start := â† IO.monoMsNow
   for _ in [0:n] do
     let _ := nameLens.get person
     let _ := nameLens.set person "Bob"
     let _ := nameLens.over person (fun n => n.toUpper)
-  let end := ← IO.monoMsNow
+  let end := â† IO.monoMsNow
   IO.println s!"Lens operations ({n} iterations): {end - start}ms"
 
 def benchmarkPrismOperations (n : Nat) : IO Unit := do
   let maybePerson := some { name := "Alice", age := 30, email := "alice@example.com" }
-  let start := ← IO.monoMsNow
+  let start := â† IO.monoMsNow
   for _ in [0:n] do
     let _ := maybePrism.preview maybePerson
     let _ := maybePrism.build { name := "Bob", age := 25, email := "bob@example.com" }
-  let end := ← IO.monoMsNow
+  let end := â† IO.monoMsNow
   IO.println s!"Prism operations ({n} iterations): {end - start}ms"
 
 def benchmarkTraversalOperations (n : Nat) : IO Unit := do
   let people := [{ name := "Alice", age := 30, email := "alice@example.com" },
                  { name := "Bob", age := 25, email := "bob@example.com" },
                  { name := "Charlie", age := 35, email := "charlie@example.com" }]
-  let start := ← IO.monoMsNow
+  let start := â† IO.monoMsNow
   for _ in [0:n] do
     let _ := listTraversal.traverse (fun p => p.age + 1) people
     let _ := listTraversal.traverse (fun p => some p) people
-  let end := ← IO.monoMsNow
+  let end := â† IO.monoMsNow
   IO.println s!"Traversal operations ({n} iterations): {end - start}ms"
 
 def benchmarkComposition (n : Nat) : IO Unit := do
@@ -91,12 +91,12 @@ def benchmarkComposition (n : Nat) : IO Unit := do
                    address := { street := "123 Main St", city := "Anytown", zip := "12345" },
                    employees := [{ name := "Alice", age := 30, email := "alice@example.com" },
                                 { name := "Bob", age := 25, email := "bob@example.com" }] }
-  let streetLens' := streetLens ∘ₗ addressLens
-  let start := ← IO.monoMsNow
+  let streetLens' := streetLens âˆ˜â‚— addressLens
+  let start := â† IO.monoMsNow
   for _ in [0:n] do
     let _ := streetLens'.get company
     let _ := streetLens'.set company "456 Oak Ave"
-  let end := ← IO.monoMsNow
+  let end := â† IO.monoMsNow
   IO.println s!"Composition operations ({n} iterations): {end - start}ms"
 
 def main : IO Unit := do

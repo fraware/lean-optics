@@ -1,4 +1,4 @@
-/-!
+/-
 # Basic Prism Tests
 
 This module tests basic prism functionality and laws.
@@ -40,17 +40,17 @@ def maybeStringPrism : Prism (Option String) String :=
 
 theorem maybeStringPrism_laws : Prism.WellFormed maybeStringPrism := by
   constructor
-  · -- match_build
+  Â· -- match_build
     intro s
     simp [maybeStringPrism, Prism.match_build]
-  · constructor
-    · -- build_match
+  Â· constructor
+    Â· -- build_match
       intro s h
       simp [maybeStringPrism, Prism.build_match] at h
       cases h with
       | inl h' => simp [h']
       | inr h' => simp [h']
-    · -- no_match_id
+    Â· -- no_match_id
       intro s h
       simp [maybeStringPrism, Prism.no_match_id] at h
       cases h with

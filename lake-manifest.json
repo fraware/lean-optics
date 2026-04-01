@@ -1,0 +1,14 @@
+{"version": 7,
+ "packagesDir": ".lake/packages",
+ "packages":
+ [{"url": "https://github.com/leanprover-community/batteries",
+   "type": "git",
+   "subDir": null,
+   "rev": "36752f7c96ae43bdb4d00d0a7aafb4ca8ac06064",
+   "name": "batteries",
+   "manifestFile": "lake-manifest.json",
+   "inputRev": "36752f7c96ae43bdb4d00d0a7aafb4ca8ac06064",
+   "inherited": false,
+   "configFile": "lakefile.toml"}],
+ "name": "«lean-optics»",
+ "lakeDir": ".lake"}

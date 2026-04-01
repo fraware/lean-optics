@@ -1,4 +1,4 @@
-/-!
+/-
 # Basic Lens Tests
 
 This module tests basic lens functionality and laws.
@@ -33,19 +33,19 @@ theorem nameLens_put_put : Lens.put_put nameLens := by
   simp [nameLens, Lens.put_put]
 
 -- Test lens composition
-def nameAgeLens : Lens Person (String × Nat) :=
+def nameAgeLens : Lens Person (String Ã— Nat) :=
   lens! (fun p => (p.name, p.age)) (fun p (n, a) => { p with name := n, age := a })
 
 theorem nameAgeLens_laws : Lens.WellFormed nameAgeLens := by
   constructor
-  · -- get_put
+  Â· -- get_put
     intro p (n, a)
     simp [nameAgeLens, Lens.get_put]
-  · constructor
-    · -- put_get
+  Â· constructor
+    Â· -- put_get
       intro p
       simp [nameAgeLens, Lens.put_get]
-    · -- put_put
+    Â· -- put_put
       intro p (n1, a1) (n2, a2)
       simp [nameAgeLens, Lens.put_put]
 

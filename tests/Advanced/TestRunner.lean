@@ -1,4 +1,4 @@
-/-!
+/-
 # Advanced Test Runner
 
 This module provides a comprehensive test runner for all advanced optics tests,
@@ -36,20 +36,20 @@ structure TestResult where
 
 /-- Run a single test with timing -/
 def runSingleTest (testName : String) (test : IO Unit) : IO TestResult := do
-  let startTime ← IO.monoMsNow
+  let startTime â† IO.monoMsNow
   try
     test
-    let endTime ← IO.monoMsNow
+    let endTime â† IO.monoMsNow
     let duration := endTime - startTime
     pure { testName, success := true, duration }
   catch e =>
-    let endTime ← IO.monoMsNow
+    let endTime â† IO.monoMsNow
     let duration := endTime - startTime
     pure { testName, success := false, duration, errorMessage := some e.toString }
 
 /-- Run nested record tests -/
 def runNestedRecordTests : IO (Array TestResult) := do
-  let tests : Array (String × IO Unit) := #[
+  let tests : Array (String Ã— IO Unit) := #[
     ("3_level_lens_composition", do
       let org := testOrganization
       let lens := test3LevelLens
@@ -111,13 +111,13 @@ def runNestedRecordTests : IO (Array TestResult) := do
 
   let mut results := #[]
   for (name, test) in tests do
-    let result ← runSingleTest name test
+    let result â† runSingleTest name test
     results := results.push result
   pure results
 
 /-- Run complex prism composition tests -/
 def runComplexPrismTests : IO (Array TestResult) := do
-  let tests : Array (String × IO Unit) := #[
+  let tests : Array (String Ã— IO Unit) := #[
     ("active_task_prism", do
       let task := testTask1
       let prism := activeTaskPrism
@@ -206,13 +206,13 @@ def runComplexPrismTests : IO (Array TestResult) := do
 
   let mut results := #[]
   for (name, test) in tests do
-    let result ← runSingleTest name test
+    let result â† runSingleTest name test
     results := results.push result
   pure results
 
 /-- Run refactor semantics tests -/
 def runRefactorSemanticsTests : IO (Array TestResult) := do
-  let tests : Array (String × IO Unit) := #[
+  let tests : Array (String Ã— IO Unit) := #[
     ("stack_operations_preservation", do
       let state := testState
       let (newState1, _) := pop state
@@ -249,7 +249,7 @@ def runRefactorSemanticsTests : IO (Array TestResult) := do
     ("state_inequality_preservation", do
       let state1 := testState
       let state2 := push state1 100
-      let _ := state1 ≠ state2
+      let _ := state1 â‰  state2
       pure ()),
     ("state_serialization_preservation", do
       let state := testState
@@ -314,13 +314,13 @@ def runRefactorSemanticsTests : IO (Array TestResult) := do
 
   let mut results := #[]
   for (name, test) in tests do
-    let result ← runSingleTest name test
+    let result â† runSingleTest name test
     results := results.push result
   pure results
 
 /-- Run performance benchmarks -/
 def runPerformanceBenchmarks : IO (Array TestResult) := do
-  let tests : Array (String × IO Unit) := #[
+  let tests : Array (String Ã— IO Unit) := #[
     ("lens_get_performance", do
       let org := testOrganization
       let lens := test3LevelLens
@@ -388,7 +388,7 @@ def runPerformanceBenchmarks : IO (Array TestResult) := do
 
   let mut results := #[]
   for (name, test) in tests do
-    let result ← runSingleTest name test
+    let result â† runSingleTest name test
     results := results.push result
   pure results
 
@@ -401,25 +401,25 @@ def runAllAdvancedTests (config : TestConfig) : IO (Array TestResult) := do
   -- Run nested record tests
   if config.enableComplexTests then
     IO.println "Running nested record tests..."
-    let nestedResults ← runNestedRecordTests
+    let nestedResults â† runNestedRecordTests
     allResults := allResults.append nestedResults
 
   -- Run complex prism tests
   if config.enableComplexTests then
     IO.println "Running complex prism composition tests..."
-    let prismResults ← runComplexPrismTests
+    let prismResults â† runComplexPrismTests
     allResults := allResults.append prismResults
 
   -- Run refactor semantics tests
   if config.enableComplexTests then
     IO.println "Running refactor semantics tests..."
-    let refactorResults ← runRefactorSemanticsTests
+    let refactorResults â† runRefactorSemanticsTests
     allResults := allResults.append refactorResults
 
   -- Run performance benchmarks
   if config.enablePerformanceTests then
     IO.println "Running performance benchmarks..."
-    let performanceResults ← runPerformanceBenchmarks
+    let performanceResults â† runPerformanceBenchmarks
     allResults := allResults.append performanceResults
 
   pure allResults
@@ -427,9 +427,9 @@ def runAllAdvancedTests (config : TestConfig) : IO (Array TestResult) := do
 /-- Generate test report -/
 def generateTestReport (results : Array TestResult) : IO Unit := do
   let total := results.size
-  let successful := results.filter (·.success) |>.size
-  let failed := results.filter (¬ ·.success) |>.size
-  let avgDuration := results.map (·.duration) |>.foldl (· + ·) 0 / total
+  let successful := results.filter (Â·.success) |>.size
+  let failed := results.filter (Â¬ Â·.success) |>.size
+  let avgDuration := results.map (Â·.duration) |>.foldl (Â· + Â·) 0 / total
 
   IO.println "=== Advanced Optics Test Report ==="
   IO.println s!"Total tests: {total}"
@@ -439,32 +439,32 @@ def generateTestReport (results : Array TestResult) : IO Unit := do
   IO.println ""
 
   -- Group results by test type
-  let nestedResults := results.filter (·.testName.contains "3_level")
-  let prismResults := results.filter (·.testName.contains "prism")
-  let refactorResults := results.filter (·.testName.contains "preservation")
-  let performanceResults := results.filter (·.testName.contains "performance")
+  let nestedResults := results.filter (Â·.testName.contains "3_level")
+  let prismResults := results.filter (Â·.testName.contains "prism")
+  let refactorResults := results.filter (Â·.testName.contains "preservation")
+  let performanceResults := results.filter (Â·.testName.contains "performance")
 
   IO.println "=== Test Categories ==="
-  IO.println s!"Nested record tests: {nestedResults.filter (·.success) |>.size}/{nestedResults.size}"
-  IO.println s!"Prism composition tests: {prismResults.filter (·.success) |>.size}/{prismResults.size}"
-  IO.println s!"Refactor semantics tests: {refactorResults.filter (·.success) |>.size}/{refactorResults.size}"
-  IO.println s!"Performance tests: {performanceResults.filter (·.success) |>.size}/{performanceResults.size}"
+  IO.println s!"Nested record tests: {nestedResults.filter (Â·.success) |>.size}/{nestedResults.size}"
+  IO.println s!"Prism composition tests: {prismResults.filter (Â·.success) |>.size}/{prismResults.size}"
+  IO.println s!"Refactor semantics tests: {refactorResults.filter (Â·.success) |>.size}/{refactorResults.size}"
+  IO.println s!"Performance tests: {performanceResults.filter (Â·.success) |>.size}/{performanceResults.size}"
   IO.println ""
 
   -- Show failed tests
-  let failedTests := results.filter (¬ ·.success)
+  let failedTests := results.filter (Â¬ Â·.success)
   if failedTests.size > 0 then
     IO.println "=== Failed Tests ==="
     for result in failedTests do
-      IO.println s!"❌ {result.testName}: {result.errorMessage.getD "Unknown error"}"
+      IO.println s!"âŒ {result.testName}: {result.errorMessage.getD "Unknown error"}"
     IO.println ""
 
   -- Show performance summary
-  let performanceTests := results.filter (·.testName.contains "performance")
+  let performanceTests := results.filter (Â·.testName.contains "performance")
   if performanceTests.size > 0 then
     IO.println "=== Performance Summary ==="
     for result in performanceTests do
-      let status := if result.duration > 200 then "⚠️ " else "✅ "
+      let status := if result.duration > 200 then "âš ï¸ " else "âœ… "
       IO.println s!"{status}{result.testName}: {result.duration}ms"
     IO.println ""
 
@@ -479,15 +479,15 @@ def main : IO Unit := do
     performanceThreshold := 200
   }
 
-  let results ← runAllAdvancedTests config
+  let results â† runAllAdvancedTests config
   generateTestReport results
 
   -- Check if all tests passed
-  let allPassed := results.all (·.success)
+  let allPassed := results.all (Â·.success)
   if allPassed then
-    IO.println "🎉 All advanced tests passed!"
+    IO.println "ðŸŽ‰ All advanced tests passed!"
   else
-    IO.println "❌ Some tests failed. See details above."
+    IO.println "âŒ Some tests failed. See details above."
     exit 1
 
 end Optics.Tests.Advanced

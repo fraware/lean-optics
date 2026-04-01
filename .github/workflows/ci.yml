@@ -12,10 +12,15 @@ env:
   REGISTRY: ghcr.io
   IMAGE_NAME: fraware/lean-optics
 
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
-  test:
-    name: Test Suite
+  quality:
+    name: Quality Gates
     runs-on: ubuntu-latest
+    timeout-minutes: 30
 
     steps:
       - name: Checkout code
@@ -30,26 +35,79 @@ jobs:
         uses: actions/cache@v3
         with:
           path: .lake/packages
-          key: lake-packages-${{ hashFiles('lakefile.lean') }}
+          key: lake-packages-${{ hashFiles('Lakefile.lean', 'lean-toolchain', 'lake-manifest.json') }}
           restore-keys: |
             lake-packages-
 
       - name: Install dependencies
         run: lake build
 
+      - name: Placeholder and stub scan
+        run: |
+          chmod +x scripts/ci/check_placeholders.sh
+          ./scripts/ci/check_placeholders.sh
+
+      - name: Determinism check
+        run: |
+          chmod +x scripts/ci/check_determinism.sh
+          ./scripts/ci/check_determinism.sh
+
       - name: Run tests
         run: make test
 
       - name: Run benchmarks
-        run: make bench
+        run: |
+          make bench | tee bench.out
+          rg -q "operations" bench.out
 
       - name: Generate documentation
         run: make docs
 
+  security:
+    name: Security and SBOM
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    needs: quality
+    permissions:
+      contents: read
+      security-events: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Secrets scan
+        uses: gitleaks/gitleaks-action@v2
+
+      - name: Build local image for scanning
+        run: docker build -t lean-optics:ci .
+
+      - name: Container scan
+        uses: aquasecurity/trivy-action@0.24.0
+        with:
+          image-ref: lean-optics:ci
+          format: table
+          exit-code: "1"
+          severity: CRITICAL,HIGH
+
+      - name: Generate SBOM
+        uses: anchore/sbom-action@v0
+        with:
+          image: lean-optics:ci
+          format: spdx-json
+          output-file: sbom.spdx.json
+
+      - name: Upload SBOM artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: sbom
+          path: sbom.spdx.json
+
   docker-build:
     name: Build Docker Image
     runs-on: ubuntu-latest
-    needs: test
+    timeout-minutes: 30
+    needs: [quality, security]
     if: github.event_name == 'push' || github.event_name == 'release'
 
     permissions:
@@ -97,6 +155,7 @@ jobs:
   docker-test:
     name: Test Docker Image
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     needs: docker-build
     if: github.event_name == 'push' || github.event_name == 'release'
 
@@ -110,7 +169,8 @@ jobs:
   release:
     name: Create Release
     runs-on: ubuntu-latest
-    needs: [test, docker-build, docker-test]
+    timeout-minutes: 15
+    needs: [quality, security, docker-build, docker-test]
     if: github.event_name == 'release'
 
     permissions:
@@ -119,6 +179,15 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+
+      - name: Install Cosign
+        uses: sigstore/cosign-installer@v3.5.0
+
+      - name: Sign container image
+        env:
+          COSIGN_EXPERIMENTAL: "true"
+        run: |
+          cosign sign --yes ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.event.release.tag_name }}
 
       - name: Create Release Notes
         run: |

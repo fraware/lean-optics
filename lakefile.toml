@@ -1,0 +1,7 @@
+name = "lean-optics"
+version = "0.1.0"
+description = "Profunctor optics library for Lean 4."
+homepage = "https://github.com/fraware/lean-optics"
+keywords = ["lean4", "optics", "lens", "prism", "traversal", "profunctor"]
+license = "MIT"
+readmeFile = "README.md"

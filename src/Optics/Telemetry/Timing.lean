@@ -1,4 +1,4 @@
-/-!
+/-
 # Timing Instrumentation for Optics Tactics
 
 This module provides timing instrumentation for the optic_laws! tactic
@@ -17,24 +17,23 @@ structure TimingContext where
   startTime : Nat
   success : Bool := false
 
-/-- Global timing context -/
-def timingContext : IO.Ref (Option TimingContext) := IO.mkRef none
+initialize timingContextRef : IO.Ref (Option TimingContext) ← IO.mkRef none
 
 /-- Start timing a tactic -/
 def startTiming (tacticName : String) (goalKind : String) : IO Unit := do
   let ts ← getTimestamp
   let ctx := { tacticName, goalKind, startTime := ts }
-  timingContext.set (some ctx)
+  timingContextRef.set (some ctx)
   recordTacticStart tacticName goalKind
 
 /-- End timing a tactic -/
 def endTiming (success : Bool := true) : IO Unit := do
-  let ctx? ← timingContext.get
+  let ctx? ← timingContextRef.get
   if let some ctx := ctx? then
     let ts ← getTimestamp
     let duration := ts - ctx.startTime
     recordTacticEnd ctx.tacticName ctx.goalKind duration success
-    timingContext.set none
+    timingContextRef.set none
 
 /-- Execute a tactic with timing -/
 def withTiming {α} (tacticName : String) (goalKind : String) (action : IO α) : IO α := do
@@ -60,15 +59,16 @@ def classifyGoal (goal : Lean.Expr) : String :=
   else "unknown"
 
 /-- Get Lean version string -/
-def getLeanVersion : IO String := do
-  let version ← Lean.versionString
-  pure version
+def getLeanVersion : IO String :=
+  return Lean.versionString
 
 /-- Get mathlib version (if available) -/
 def getMathlibVersion : IO String := do
-  -- In a real implementation, this would query the package manager
-  -- For now, we'll return a placeholder
-  pure "unknown"
+  try
+    let manifest ← IO.FS.readFile "lake-manifest.json"
+    pure (if (manifest.splitOn "batteries").length > 1 then "pinned (see lake-manifest.json)" else "unavailable")
+  catch _ =>
+    pure "unavailable"
 
 /-- Initialize telemetry with version information -/
 def initializeTelemetry : IO Unit := do

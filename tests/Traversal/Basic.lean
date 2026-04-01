@@ -1,4 +1,4 @@
-/-!
+/-
 # Basic Traversal Tests
 
 This module tests basic traversal functionality and laws.
@@ -12,8 +12,8 @@ def listTraversal {A : Type} : Traversal (List A) A :=
     match xs with
     | [] => pure []
     | x :: xs => do
-      let y ← f x
-      let ys ← listTraversal.traverse f xs
+      let y â† f x
+      let ys â† listTraversal.traverse f xs
       pure (y :: ys))
 
 -- Test traversal laws
@@ -39,19 +39,19 @@ def listStringTraversal : Traversal (List String) String :=
     match xs with
     | [] => pure []
     | x :: xs => do
-      let y ← f x
-      let ys ← listStringTraversal.traverse f xs
+      let y â† f x
+      let ys â† listStringTraversal.traverse f xs
       pure (y :: ys))
 
 theorem listStringTraversal_laws : Traversal.WellFormed listStringTraversal := by
   constructor
-  · -- identity_law
+  Â· -- identity_law
     intro xs
     simp [listStringTraversal, Traversal.identity_law]
-  · constructor
-    · -- composition_law
+  Â· constructor
+    Â· -- composition_law
       intro F G _ _ f g xs
       simp [listStringTraversal, Traversal.composition_law]
-    · -- naturality_law
+    Â· -- naturality_law
       intro F G _ _ f g h xs
       simp [listStringTraversal, Traversal.naturality_law]

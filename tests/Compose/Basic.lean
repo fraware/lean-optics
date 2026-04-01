@@ -1,4 +1,4 @@
-/-!
+/-
 # Basic Composition Tests
 
 This module tests composition of different optic types.
@@ -25,19 +25,19 @@ def addressLens : Lens Person Address :=
   lens! Person.address (fun p a => { p with address := a })
 
 def streetLens' : Lens Person String :=
-  streetLens ∘ₗ addressLens
+  streetLens âˆ˜â‚— addressLens
 
 -- Test lens composition laws
 theorem streetLens'_laws : Lens.WellFormed streetLens' := by
   constructor
-  · -- get_put
+  Â· -- get_put
     intro p s
     simp [streetLens', Lens.comp, Lens.get_put]
-  · constructor
-    · -- put_get
+  Â· constructor
+    Â· -- put_get
       intro p
       simp [streetLens', Lens.comp, Lens.put_get]
-    · -- put_put
+    Â· -- put_put
       intro p s1 s2
       simp [streetLens', Lens.comp, Lens.put_put]
 
@@ -49,22 +49,22 @@ def maybeStringPrism : Prism (Option String) String :=
   prism! (fun x => match x with | some s => Sum.inl s | none => Sum.inr none) some
 
 def maybeStringPrism' : Prism (Option String) String :=
-  maybeStringPrism ∘ₚ maybePrism
+  maybeStringPrism âˆ˜â‚š maybePrism
 
 -- Test prism composition laws
 theorem maybeStringPrism'_laws : Prism.WellFormed maybeStringPrism' := by
   constructor
-  · -- match_build
+  Â· -- match_build
     intro s
     simp [maybeStringPrism', Prism.comp, Prism.match_build]
-  · constructor
-    · -- build_match
+  Â· constructor
+    Â· -- build_match
       intro s h
       simp [maybeStringPrism', Prism.comp, Prism.build_match] at h
       cases h with
       | inl h' => simp [h']
       | inr h' => simp [h']
-    · -- no_match_id
+    Â· -- no_match_id
       intro s h
       simp [maybeStringPrism', Prism.comp, Prism.no_match_id] at h
       cases h with
@@ -77,8 +77,8 @@ def listTraversal {A : Type} : Traversal (List A) A :=
     match xs with
     | [] => pure []
     | x :: xs => do
-      let y ← f x
-      let ys ← listTraversal.traverse f xs
+      let y â† f x
+      let ys â† listTraversal.traverse f xs
       pure (y :: ys))
 
 def listStringTraversal : Traversal (List String) String :=
@@ -86,23 +86,23 @@ def listStringTraversal : Traversal (List String) String :=
     match xs with
     | [] => pure []
     | x :: xs => do
-      let y ← f x
-      let ys ← listStringTraversal.traverse f xs
+      let y â† f x
+      let ys â† listStringTraversal.traverse f xs
       pure (y :: ys))
 
 def listStringTraversal' : Traversal (List String) String :=
-  listStringTraversal ∘ₜ listTraversal
+  listStringTraversal âˆ˜â‚œ listTraversal
 
 -- Test traversal composition laws
 theorem listStringTraversal'_laws : Traversal.WellFormed listStringTraversal' := by
   constructor
-  · -- identity_law
+  Â· -- identity_law
     intro xs
     simp [listStringTraversal', Traversal.comp, Traversal.identity_law]
-  · constructor
-    · -- composition_law
+  Â· constructor
+    Â· -- composition_law
       intro F G _ _ f g xs
       simp [listStringTraversal', Traversal.comp, Traversal.composition_law]
-    · -- naturality_law
+    Â· -- naturality_law
       intro F G _ _ f g h xs
       simp [listStringTraversal', Traversal.comp, Traversal.naturality_law]

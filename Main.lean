@@ -1,4 +1,4 @@
-/-!
+/-
 # Lean Optics - Main Entry Point
 
 This is the main entry point for the lean-optics library.
@@ -51,8 +51,8 @@ def showInfo : IO Unit := do
   IO.println "- Optics.Verification: Determinism and performance verification"
   IO.println ""
   IO.println "Performance targets:"
-  IO.println "- P95 ≤ 200ms per optic_laws! tactic"
-  IO.println "- P50 ≤ 80ms median completion"
+  IO.println "- P95 â‰¤ 200ms per optic_laws! tactic"
+  IO.println "- P50 â‰¤ 80ms median completion"
   IO.println "- Deterministic proof terms across runs"
   IO.println "- Byte-stable proof terms"
 
@@ -84,7 +84,7 @@ def showExample : IO Unit := do
   IO.println "3. Composition:"
   IO.println "```lean"
   IO.println "def streetLens' : Lens Person String :="
-  IO.println "  streetLens ∘ₗ addressLens"
+  IO.println "  streetLens âˆ˜â‚— addressLens"
   IO.println "```"
 
 def runTests : IO Unit := do

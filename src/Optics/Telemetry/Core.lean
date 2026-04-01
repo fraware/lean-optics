@@ -1,33 +1,38 @@
-/-!
+/-
 # Optics Telemetry System
 
-This module provides opt-in telemetry collection for the optics library.
-Telemetry is disabled by default and can be enabled by setting `OPTICS_TELEMETRY=true`.
+Opt-in telemetry (disabled unless `OPTICS_TELEMETRY=true`).
 -/
 
 import Lean
-import Json
+import Lean.Data.Json
 
 namespace Optics.Telemetry
 
-/-- Configuration for telemetry collection -/
+def parseBoolFlag (value : String) : Bool :=
+  let normalized := value.trim.toLower
+  normalized == "1" || normalized == "true" || normalized == "yes" || normalized == "on"
+
+def parseNatOrDefault (defaultValue : Nat) (value? : Option String) : Nat :=
+  match value? with
+  | some value => value.trim.toNat?.getD defaultValue
+  | none => defaultValue
+
 structure TelemetryConfig where
   enabled : Bool := false
   outputFile : Option String := none
   webhookUrl : Option String := none
   maxBufferSize : Nat := 1000
-  flushInterval : Nat := 100 -- milliseconds
+  flushInterval : Nat := 100
 
-/-- Global telemetry configuration -/
 def config : IO TelemetryConfig := do
-  let enabled ← IO.getEnv "OPTICS_TELEMETRY" >>= (·.map (· == "true")) |>.getD false
+  let enabled := parseBoolFlag ((← IO.getEnv "OPTICS_TELEMETRY").getD "false")
   let outputFile ← IO.getEnv "OPTICS_TELEMETRY_FILE"
   let webhookUrl ← IO.getEnv "OPTICS_TELEMETRY_WEBHOOK"
-  let maxBuffer ← IO.getEnv "OPTICS_TELEMETRY_MAX_BUFFER" >>= (·.map String.toNat!) |>.getD 1000
-  let flushInterval ← IO.getEnv "OPTICS_TELEMETRY_FLUSH_INTERVAL" >>= (·.map String.toNat!) |>.getD 100
+  let maxBuffer := parseNatOrDefault 1000 (← IO.getEnv "OPTICS_TELEMETRY_MAX_BUFFER")
+  let flushInterval := parseNatOrDefault 100 (← IO.getEnv "OPTICS_TELEMETRY_FLUSH_INTERVAL")
   pure { enabled, outputFile, webhookUrl, maxBufferSize := maxBuffer, flushInterval }
 
-/-- Types of telemetry events -/
 inductive TelemetryEvent where
   | tacticStart (tacticName : String) (goalKind : String) (timestamp : Nat)
   | tacticEnd (tacticName : String) (goalKind : String) (duration : Nat) (success : Bool)
@@ -35,104 +40,101 @@ inductive TelemetryEvent where
   | versionInfo (leanVersion : String) (mathlibVersion : String) (timestamp : Nat)
   | error (errorType : String) (message : String) (timestamp : Nat)
 
-/-- Convert telemetry event to JSON -/
-def TelemetryEvent.toJson : TelemetryEvent → Json
-  | .tacticStart name kind ts => Json.mkObj [
-    ("type", "tactic_start"),
-    ("tactic", name),
-    ("goal_kind", kind),
-    ("timestamp", ts)
-  ]
-  | .tacticEnd name kind duration success => Json.mkObj [
-    ("type", "tactic_end"),
-    ("tactic", name),
-    ("goal_kind", kind),
-    ("duration", duration),
-    ("success", success)
-  ]
-  | .goalKind kind count => Json.mkObj [
-    ("type", "goal_kind"),
-    ("kind", kind),
-    ("count", count)
-  ]
-  | .versionInfo leanVer mathlibVer ts => Json.mkObj [
-    ("type", "version_info"),
-    ("lean_version", leanVer),
-    ("mathlib_version", mathlibVer),
-    ("timestamp", ts)
-  ]
-  | .error errorType message ts => Json.mkObj [
-    ("type", "error"),
-    ("error_type", errorType),
-    ("message", message),
-    ("timestamp", ts)
-  ]
+def TelemetryEvent.toJson : TelemetryEvent → Lean.Json
+  | .tacticStart name kind ts => Lean.Json.mkObj [
+      ("type", "tactic_start"),
+      ("tactic", name),
+      ("goal_kind", kind),
+      ("timestamp", ts)
+    ]
+  | .tacticEnd name kind duration success => Lean.Json.mkObj [
+      ("type", "tactic_end"),
+      ("tactic", name),
+      ("goal_kind", kind),
+      ("duration", duration),
+      ("success", success)
+    ]
+  | .goalKind kind count => Lean.Json.mkObj [
+      ("type", "goal_kind"),
+      ("kind", kind),
+      ("count", count)
+    ]
+  | .versionInfo leanVer mathlibVer ts => Lean.Json.mkObj [
+      ("type", "version_info"),
+      ("lean_version", leanVer),
+      ("mathlib_version", mathlibVer),
+      ("timestamp", ts)
+    ]
+  | .error errorType message ts => Lean.Json.mkObj [
+      ("type", "error"),
+      ("error_type", errorType),
+      ("message", message),
+      ("timestamp", ts)
+    ]
 
-/-- Telemetry buffer -/
 structure TelemetryBuffer where
   events : Array TelemetryEvent := #[]
   lastFlush : Nat := 0
+  deriving Inhabited
 
-/-- Global telemetry buffer -/
-def telemetryBuffer : IO.Ref TelemetryBuffer := IO.mkRef {}
+initialize telemetryBufferRef : IO.Ref TelemetryBuffer ←
+  IO.mkRef { events := #[], lastFlush := 0 }
 
-/-- Add event to telemetry buffer -/
-def addEvent (event : TelemetryEvent) : IO Unit := do
-  let cfg ← config
-  if cfg.enabled then
-    let buffer ← telemetryBuffer.get
-    let newBuffer := { buffer with events := buffer.events.push event }
-    telemetryBuffer.set newBuffer
-
-    -- Auto-flush if buffer is full
-    if newBuffer.events.size >= cfg.maxBufferSize then
-      flushTelemetry
-
-/-- Flush telemetry buffer to output -/
 def flushTelemetry : IO Unit := do
   let cfg ← config
   if cfg.enabled then
-    let buffer ← telemetryBuffer.get
+    let buffer ← telemetryBufferRef.get
     if buffer.events.size > 0 then
       let jsonEvents := buffer.events.map TelemetryEvent.toJson
-      let output := Json.mkObj [("events", Json.arr jsonEvents)]
+      let output := Lean.Json.mkObj [("events", Lean.Json.arr jsonEvents)]
 
-      -- Write to file if configured
       if let some file := cfg.outputFile then
-        IO.FS.writeFile file (Json.pretty output)
+        IO.FS.writeFile file (Lean.Json.pretty output)
 
-      -- Send to webhook if configured
       if let some url := cfg.webhookUrl then
-        -- Note: In a real implementation, this would use HTTP client
-        IO.println s!"[TELEMETRY] Would send to webhook: {url}"
+        let payload := Lean.Json.compress output
+        try
+          let response ← IO.Process.output {
+            cmd := "curl"
+            args := #[
+              "-sS", "-X", "POST", url,
+              "-H", "Content-Type: application/json",
+              "--data-binary", payload
+            ]
+          }
+          if response.exitCode != 0 then
+            IO.eprintln s!"[TELEMETRY] webhook send failed ({response.exitCode}): {response.stderr}"
+        catch e =>
+          IO.eprintln s!"[TELEMETRY] webhook send exception: {e}"
 
-      -- Clear buffer
-      telemetryBuffer.set { events := #[], lastFlush := 0 }
+      telemetryBufferRef.set { events := #[], lastFlush := 0 }
 
-/-- Get current timestamp in milliseconds -/
-def getTimestamp : IO Nat := do
-  let time ← IO.monoMsNow
-  pure time.toNat
+def addEvent (event : TelemetryEvent) : IO Unit := do
+  let cfg ← config
+  if cfg.enabled then
+    let buffer ← telemetryBufferRef.get
+    let newBuffer := { buffer with events := buffer.events.push event }
+    telemetryBufferRef.set newBuffer
+    if newBuffer.events.size >= cfg.maxBufferSize then
+      flushTelemetry
 
-/-- Record tactic start -/
+def getTimestamp : IO Nat :=
+  BaseIO.toIO IO.monoMsNow
+
 def recordTacticStart (tacticName : String) (goalKind : String) : IO Unit := do
   let ts ← getTimestamp
   addEvent (.tacticStart tacticName goalKind ts)
 
-/-- Record tactic end -/
 def recordTacticEnd (tacticName : String) (goalKind : String) (duration : Nat) (success : Bool) : IO Unit := do
   addEvent (.tacticEnd tacticName goalKind duration success)
 
-/-- Record goal kind statistics -/
 def recordGoalKind (kind : String) (count : Nat) : IO Unit := do
   addEvent (.goalKind kind count)
 
-/-- Record version information -/
 def recordVersionInfo (leanVersion : String) (mathlibVersion : String) : IO Unit := do
   let ts ← getTimestamp
   addEvent (.versionInfo leanVersion mathlibVersion ts)
 
-/-- Record error -/
 def recordError (errorType : String) (message : String) : IO Unit := do
   let ts ← getTimestamp
   addEvent (.error errorType message ts)

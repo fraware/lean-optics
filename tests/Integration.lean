@@ -1,4 +1,4 @@
-/-!
+/-
 # Integration Tests
 
 This module tests the complete integration of all optics components.
@@ -49,8 +49,8 @@ def listTraversal {A : Type} : Traversal (List A) A :=
     match xs with
     | [] => pure []
     | x :: xs => do
-      let y ← f x
-      let ys ← listTraversal.traverse f xs
+      let y â† f x
+      let ys â† listTraversal.traverse f xs
       pure (y :: ys))
 
 -- Test data
@@ -70,7 +70,7 @@ def testCompany : Company :=
 
 -- Test lens composition
 def streetLens' : Lens Person String :=
-  streetLens ∘ₗ addressLens
+  streetLens âˆ˜â‚— addressLens
 
 #eval streetLens'.get testPerson  -- "123 Main St"
 #eval streetLens'.set testPerson "456 Oak Ave"  -- { ..., address := { street := "456 Oak Ave", ... } }
@@ -94,30 +94,30 @@ def lensPrismComp : Lens (Option Person) String :=
 -- Test law preservation
 theorem streetLens'_laws : Lens.WellFormed streetLens' := by
   constructor
-  · -- get_put
+  Â· -- get_put
     intro p s
     simp [streetLens', Lens.comp, Lens.get_put]
-  · constructor
-    · -- put_get
+  Â· constructor
+    Â· -- put_get
       intro p
       simp [streetLens', Lens.comp, Lens.put_get]
-    · -- put_put
+    Â· -- put_put
       intro p s1 s2
       simp [streetLens', Lens.comp, Lens.put_put]
 
 theorem maybePrism_laws : Prism.WellFormed maybePrism := by
   constructor
-  · -- match_build
+  Â· -- match_build
     intro a
     simp [maybePrism, Prism.match_build]
-  · constructor
-    · -- build_match
+  Â· constructor
+    Â· -- build_match
       intro s h
       simp [maybePrism, Prism.build_match] at h
       cases h with
       | inl h' => simp [h']
       | inr h' => simp [h']
-    · -- no_match_id
+    Â· -- no_match_id
       intro s h
       simp [maybePrism, Prism.no_match_id] at h
       cases h with
@@ -126,14 +126,14 @@ theorem maybePrism_laws : Prism.WellFormed maybePrism := by
 
 theorem listTraversal_laws : Traversal.WellFormed listTraversal := by
   constructor
-  · -- identity_law
+  Â· -- identity_law
     intro xs
     simp [listTraversal, Traversal.identity_law]
-  · constructor
-    · -- composition_law
+  Â· constructor
+    Â· -- composition_law
       intro F G _ _ f g xs
       simp [listTraversal, Traversal.composition_law]
-    · -- naturality_law
+    Â· -- naturality_law
       intro F G _ _ f g h xs
       simp [listTraversal, Traversal.naturality_law]
 

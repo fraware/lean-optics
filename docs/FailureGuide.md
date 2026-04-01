@@ -35,7 +35,8 @@ theorem myLensLaw : lens.get_put s a := by
   optic_laws!
 
 -- 2. Add missing lemmas to the simp set
-@[simp] lemma myCustomLemma : myProperty := by sorry
+@[simp] lemma myCustomLemma : myProperty := by
+  exact myProperty_proof
 
 -- 3. Use more specific tactics
 theorem myLensLaw : lens.get_put s a := by

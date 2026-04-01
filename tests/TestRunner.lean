@@ -1,4 +1,4 @@
-/-!
+/-
 # Test Runner for Lean Optics
 
 This module provides a comprehensive test runner that executes all test modules
@@ -59,11 +59,11 @@ def TestRunner.report (tr : TestRunner) : IO Unit := do
     IO.println "FAILED TESTS:"
     for result in tr.results do
       if !result.passed then
-        IO.println s!"  ❌ {result.name}"
+        IO.println s!"  âŒ {result.name}"
         if let some err := result.error then
           IO.println s!"     Error: {err}"
   else
-    IO.println "✅ ALL TESTS PASSED!"
+    IO.println "âœ… ALL TESTS PASSED!"
 
   IO.println "=" * 50
 
@@ -148,8 +148,8 @@ def runTraversalTests : IO TestRunner := do
         match xs with
         | [] => pure []
         | x :: xs => do
-          let y ← f x
-          let ys ← listTraversal.traverse f xs
+          let y â† f x
+          let ys â† listTraversal.traverse f xs
           pure (y :: ys))
 
     -- Test traverse operation
@@ -171,7 +171,7 @@ def runCompositionTests : IO TestRunner := do
     -- Test lens composition
     let streetLens : Lens Address String := lens! Address.street (fun a s => { a with street := s })
     let addressLens : Lens Person Address := lens! Person.address (fun p a => { p with address := a })
-    let streetLens' : Lens Person String := streetLens ∘ₗ addressLens
+    let streetLens' : Lens Person String := streetLens âˆ˜â‚— addressLens
 
     let testPerson : Person :=
       { name := "Alice", age := 30, email := "alice@example.com", address := { street := "Main St", city := "Anytown", zip := "12345" } }
@@ -233,11 +233,11 @@ def main : IO Unit := do
   let mut totalRunner := TestRunner.empty
 
   -- Run all test suites
-  let lensRunner ← runLensTests
-  let prismRunner ← runPrismTests
-  let traversalRunner ← runTraversalTests
-  let compositionRunner ← runCompositionTests
-  let integrationRunner ← runIntegrationTests
+  let lensRunner â† runLensTests
+  let prismRunner â† runPrismTests
+  let traversalRunner â† runTraversalTests
+  let compositionRunner â† runCompositionTests
+  let integrationRunner â† runIntegrationTests
 
   -- Combine results
   totalRunner := {
@@ -251,8 +251,8 @@ def main : IO Unit := do
 
   -- Exit with appropriate code
   if totalRunner.passed == totalRunner.total then
-    IO.println "All tests passed! 🎉"
+    IO.println "All tests passed! ðŸŽ‰"
     System.Exit.exit 0
   else
-    IO.println "Some tests failed! ❌"
+    IO.println "Some tests failed! âŒ"
     System.Exit.exit 1

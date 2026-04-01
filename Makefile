@@ -220,6 +220,9 @@ quickstart: ## Complete quickstart for new users
 .PHONY: ci-test
 ci-test: ## Run tests suitable for CI environment
 	@echo "$(GREEN)Running CI tests...$(NC)"
+	chmod +x scripts/ci/check_placeholders.sh scripts/ci/check_determinism.sh
+	./scripts/ci/check_placeholders.sh
+	./scripts/ci/check_determinism.sh
 	$(MAKE) test
 	@echo "$(GREEN)✅ CI tests passed!$(NC)"
 

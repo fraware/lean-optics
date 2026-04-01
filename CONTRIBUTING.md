@@ -58,6 +58,8 @@ Thank you for your interest in contributing to Lean Optics! This document provid
 - Use descriptive names for functions and variables
 - Add docstrings for public functions
 - Keep functions focused and small
+- Do not introduce placeholders or stubs in committed code (see `docs/NoPlaceholderPolicy.md`)
+- Use total parsing for configuration and environment inputs
 
 ### Testing
 
@@ -89,6 +91,8 @@ Thank you for your interest in contributing to Lean Optics! This document provid
 3. **Check for linting issues**
    ```bash
    lake build
+   ./scripts/ci/check_placeholders.sh
+   ./scripts/ci/check_determinism.sh
    ```
 
 4. **Submit your pull request**
