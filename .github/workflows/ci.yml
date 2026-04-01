@@ -32,7 +32,7 @@ jobs:
           lean_version: 4.8.0
 
       - name: Cache Lake dependencies
-        uses: actions/cache@v3
+        uses: actions/cache@v5
         with:
           path: .lake/packages
           key: lake-packages-${{ hashFiles('Lakefile.lean', 'lean-toolchain', 'lake-manifest.json') }}
