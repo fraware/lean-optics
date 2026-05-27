@@ -1,4 +1,5 @@
 <div align="center">
+  
 # lean-optics
 
 `lean-optics` is a Lean 4 package that implements profunctor-style optics:
