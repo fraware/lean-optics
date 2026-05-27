@@ -1,3 +1,4 @@
+<div align="center">
 # lean-optics
 
 `lean-optics` is a Lean 4 package that implements profunctor-style optics:
@@ -5,6 +6,8 @@
 
 [![Lean 4](https://img.shields.io/badge/Lean%204-v4.8.0-blue.svg)](https://leanprover.github.io/)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
+
+</div>
 
 ## Install and import
 
