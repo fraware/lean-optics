@@ -10,12 +10,12 @@ import Lean.Data.Json
 namespace Optics.Telemetry
 
 def parseBoolFlag (value : String) : Bool :=
-  let normalized := value.trim.toLower
+  let normalized := value.trimAscii.toString.toLower
   normalized == "1" || normalized == "true" || normalized == "yes" || normalized == "on"
 
 def parseNatOrDefault (defaultValue : Nat) (value? : Option String) : Nat :=
   match value? with
-  | some value => value.trim.toNat?.getD defaultValue
+  | some value => value.trimAscii.toString.toNat?.getD defaultValue
   | none => defaultValue
 
 structure TelemetryConfig where

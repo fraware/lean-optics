@@ -1,58 +1,39 @@
 /-
 # Basic Prism Tests
-
-This module tests basic prism functionality and laws.
 -/
 
 import Optics
+import tests.Common
 
--- Test prism for Maybe
-def maybePrism {A : Type} : Prism (Option A) A :=
-  prism! (fun x => match x with | some a => Sum.inl a | none => Sum.inr none) some
+open Optics Tests.Common
 
--- Test prism laws
-theorem maybePrism_match_build : Prism.match_build maybePrism := by
-  intro a
-  simp [maybePrism, Prism.match_build]
+theorem optionPrism_match_build : Prism.match_build (optionPrism : Prism (Option Nat) Nat) := by
+  intro a; simp [optionPrism]
 
-theorem maybePrism_build_match : Prism.build_match maybePrism := by
-  intro s h
-  simp [maybePrism, Prism.build_match] at h
-  cases h with
-  | inl h' => simp [h']
-  | inr h' => simp [h']
+theorem optionPrism_build_match : Prism.build_match (optionPrism : Prism (Option Nat) Nat) := by
+  intro s a h
+  cases s with
+  | none => simp [optionPrism] at h
+  | some s' => simp [optionPrism] at h; cases h; rfl
 
-theorem maybePrism_no_match_id : Prism.no_match_id maybePrism := by
-  intro s h
-  simp [maybePrism, Prism.no_match_id] at h
-  cases h with
-  | inl h' => simp [h']
-  | inr h' => simp [h']
+theorem optionPrism_no_match_id : Prism.no_match_id (optionPrism : Prism (Option Nat) Nat) := by
+  intro s s' h
+  cases s with
+  | none => simp [optionPrism] at h; cases h; rfl
+  | some _ => simp [optionPrism] at h
 
--- Test prism operations
-#eval maybePrism.preview (some 42)  -- some 42
-#eval maybePrism.preview none  -- none
-#eval maybePrism.build 42  -- some 42
+theorem optionStringPrism_wellFormed : Prism.WellFormed (optionPrism : Prism (Option String) String) := by
+  refine ⟨?_, ?_, ?_⟩
+  · intro a; simp [optionPrism]
+  · intro s a h
+    cases s with
+    | none => simp [optionPrism] at h
+    | some s' => simp [optionPrism] at h; cases h; rfl
+  · intro s s' h
+    cases s with
+    | none => simp [optionPrism] at h; cases h; rfl
+    | some _ => simp [optionPrism] at h
 
--- Test prism composition
-def maybeStringPrism : Prism (Option String) String :=
-  prism! (fun x => match x with | some s => Sum.inl s | none => Sum.inr none) some
-
-theorem maybeStringPrism_laws : Prism.WellFormed maybeStringPrism := by
-  constructor
-  Â· -- match_build
-    intro s
-    simp [maybeStringPrism, Prism.match_build]
-  Â· constructor
-    Â· -- build_match
-      intro s h
-      simp [maybeStringPrism, Prism.build_match] at h
-      cases h with
-      | inl h' => simp [h']
-      | inr h' => simp [h']
-    Â· -- no_match_id
-      intro s h
-      simp [maybeStringPrism, Prism.no_match_id] at h
-      cases h with
-      | inl h' => simp [h']
-      | inr h' => simp [h']
+#eval optionPrism.preview (some 42)
+#eval optionPrism.preview (none : Option Nat)
+#eval optionPrism.build 42

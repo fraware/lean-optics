@@ -14,10 +14,18 @@ structure Prism (S A : Type u) where
 
 namespace Prism
 
+/-- Build a prism from `matchS` and `build`. -/
+def of (matchS : S → A ⊕ S) (build : A → S) : Prism S A :=
+  { matchS, build }
+
 def preview (p : Prism S A) : S → Option A :=
   fun s => match p.matchS s with
     | Sum.inl a => some a
     | Sum.inr _ => none
+
+/-- Identity prism: always matches, `build` is the identity function. -/
+def id (α : Type u) : Prism α α :=
+  ⟨fun s => Sum.inl s, fun a => a⟩
 
 def comp (p1 : Prism S A) (p2 : Prism A B) : Prism S B :=
   ⟨fun s =>

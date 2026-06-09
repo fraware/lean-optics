@@ -50,7 +50,9 @@ run: dev ## Run the application/CLI locally
 test: dev ## Run the test suite
 	@echo "$(GREEN)Running test suite...$(NC)"
 	@echo ""
+	lake build tests testsAdvanced
 	lake exe test-runner
+	lake exe test-advanced
 	@echo ""
 	@echo "$(GREEN)✅ All tests completed!$(NC)"
 
@@ -73,12 +75,13 @@ test-comprehensive: dev ## Run comprehensive test suite
 test-verbose: dev ## Run tests with verbose output
 	@echo "$(GREEN)Running verbose test suite...$(NC)"
 	@echo ""
-	lake build Tests
+	lake build tests
 	lake exe test-lens
 	lake exe test-prism
 	lake exe test-traversal
 	lake exe test-compose
 	lake exe test-runner
+	lake exe test-advanced
 	@echo ""
 	@echo "$(GREEN)✅ All tests completed!$(NC)"
 
@@ -91,12 +94,13 @@ bench: dev ## Run performance benchmarks
 	@echo "$(GREEN)✅ Benchmarks completed!$(NC)"
 
 .PHONY: docs
-docs: dev ## Generate documentation
-	@echo "$(GREEN)Generating documentation...$(NC)"
+docs: dev ## Build all libraries (verification target)
+	@echo "$(GREEN)Building all targets...$(NC)"
 	@echo ""
-	lake build docs
+	lake build
+	lake build tests testsAdvanced lean-optics bench
 	@echo ""
-	@echo "$(GREEN)✅ Documentation generated!$(NC)"
+	@echo "$(GREEN)✅ All targets built!$(NC)"
 
 # Docker targets
 .PHONY: docker-build

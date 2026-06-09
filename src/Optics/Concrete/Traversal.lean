@@ -12,6 +12,10 @@ structure Traversal (S A : Type u) where
 
 namespace Traversal
 
+/-- Build a traversal from its `traverse` implementation. -/
+def of (traverse : {F : Type u → Type u} → [Applicative F] → (A → F A) → S → F S) : Traversal S A :=
+  ⟨traverse⟩
+
 def comp (t1 : Traversal S A) (t2 : Traversal A B) : Traversal S B :=
   ⟨fun {F} [Applicative F] f s =>
     t1.traverse (fun a => t2.traverse f a) s⟩

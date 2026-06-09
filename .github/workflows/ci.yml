@@ -28,14 +28,12 @@ jobs:
 
       - name: Install Lean 4
         uses: leanprover/lean4-action@v1
-        with:
-          lean_version: 4.8.0
 
       - name: Cache Lake dependencies
         uses: actions/cache@v3
         with:
           path: .lake/packages
-          key: lake-packages-${{ hashFiles('Lakefile.lean', 'lean-toolchain', 'lake-manifest.json') }}
+          key: lake-packages-${{ hashFiles('lakefile.toml', 'lean-toolchain', 'lake-manifest.json') }}
           restore-keys: |
             lake-packages-
 
@@ -53,15 +51,12 @@ jobs:
           ./scripts/ci/check_determinism.sh
 
       - name: Run tests
-        run: make test
+        run: make test-comprehensive
 
       - name: Run benchmarks
         run: |
           make bench | tee bench.out
           rg -q "operations" bench.out
-
-      - name: Generate documentation
-        run: make docs
 
   security:
     name: Security and SBOM
@@ -199,10 +194,12 @@ jobs:
           echo "\`\`\`" >> release_notes.md
           echo "" >> release_notes.md
           echo "### Installation" >> release_notes.md
-          echo "Add to your \`lakefile.lean\`:" >> release_notes.md
-          echo "\`\`\`lean" >> release_notes.md
-          echo "require lean-optics from git" >> release_notes.md
-          echo "  \"https://github.com/fraware/lean-optics.git\" @ \"${{ github.event.release.tag_name }}\"" >> release_notes.md
+          echo "Add to your \`lakefile.toml\`:" >> release_notes.md
+          echo "\`\`\`toml" >> release_notes.md
+          echo "[[require]]" >> release_notes.md
+          echo "name = \"lean-optics\"" >> release_notes.md
+          echo "git = \"https://github.com/fraware/lean-optics.git\"" >> release_notes.md
+          echo "rev = \"${{ github.event.release.tag_name }}\"" >> release_notes.md
           echo "\`\`\`" >> release_notes.md
 
       - name: Update Release

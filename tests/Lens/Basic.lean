@@ -1,58 +1,29 @@
 /-
 # Basic Lens Tests
-
-This module tests basic lens functionality and laws.
 -/
 
 import Optics
+import tests.Common
 
--- Test record
-structure Person where
-  name : String
-  age : Nat
-  email : String
+open Optics Tests.Common
 
--- Test lens creation
-def nameLens : Lens Person String :=
-  lens! Person.name (fun p n => { p with name := n })
+def nameAgeLens : LawfulLens Person (String × Nat) :=
+  Lens.mkLawful
+    (get := fun p => (p.name, p.age))
+    (set := fun p (n, a) => { p with name := n, age := a })
+    (by intro p (n, a); rfl)
+    (by intro p; rfl)
+    (by intro p (n, a) (n', a'); rfl)
 
-def ageLens : Lens Person Nat :=
-  lens! Person.age (fun p a => { p with age := a })
+theorem nameLens_wellFormed : Lens.WellFormed nameLens :=
+  Lens.lawful_wellFormed Person.nameLens
 
--- Test lens laws
-theorem nameLens_get_put : Lens.get_put nameLens := by
-  intro p n
-  simp [nameLens, Lens.get_put]
+theorem ageLens_wellFormed : Lens.WellFormed ageLens :=
+  Lens.lawful_wellFormed Person.ageLens
 
-theorem nameLens_put_get : Lens.put_get nameLens := by
-  intro p
-  simp [nameLens, Lens.put_get]
+theorem nameAgeLens_wellFormed : Lens.WellFormed nameAgeLens.toLens :=
+  Lens.lawful_wellFormed nameAgeLens
 
-theorem nameLens_put_put : Lens.put_put nameLens := by
-  intro p n1 n2
-  simp [nameLens, Lens.put_put]
-
--- Test lens composition
-def nameAgeLens : Lens Person (String Ã— Nat) :=
-  lens! (fun p => (p.name, p.age)) (fun p (n, a) => { p with name := n, age := a })
-
-theorem nameAgeLens_laws : Lens.WellFormed nameAgeLens := by
-  constructor
-  Â· -- get_put
-    intro p (n, a)
-    simp [nameAgeLens, Lens.get_put]
-  Â· constructor
-    Â· -- put_get
-      intro p
-      simp [nameAgeLens, Lens.put_get]
-    Â· -- put_put
-      intro p (n1, a1) (n2, a2)
-      simp [nameAgeLens, Lens.put_put]
-
--- Test lens operations
-def testPerson : Person :=
-  { name := "Alice", age := 30, email := "alice@example.com" }
-
-#eval nameLens.get testPerson  -- "Alice"
-#eval nameLens.set testPerson "Bob"  -- { name := "Bob", age := 30, email := "alice@example.com" }
-#eval nameLens.over testPerson (fun n => n.toUpper)  -- { name := "ALICE", age := 30, email := "alice@example.com" }
+#eval nameLens.get testPerson
+#eval nameLens.set testPerson "Bob"
+#eval nameLens.over (fun n => n.toUpper) testPerson
