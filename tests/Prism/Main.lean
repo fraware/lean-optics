@@ -1,20 +1,12 @@
 /-
 # Prism Test Main
-
-This is the main entry point for running prism tests.
 -/
 
-import Tests.Prism.Basic
-import Tests.TestRunner
+import tests.Prism.Basic
+import tests.Runner
 
-def main : IO Unit := do
+def main : IO UInt32 := do
   IO.println "Running Prism Tests..."
-  let runner â† runPrismTests
+  let runner ← runPrismTests
   runner.report
-
-  if runner.passed == runner.total then
-    IO.println "All prism tests passed! ðŸŽ‰"
-    System.Exit.exit 0
-  else
-    IO.println "Some prism tests failed! âŒ"
-    System.Exit.exit 1
+  if runner.passed == runner.total then return 0 else return 1

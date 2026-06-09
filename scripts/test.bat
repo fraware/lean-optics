@@ -1,63 +1,45 @@
 @echo off
 setlocal enabledelayedexpansion
 
-REM Lean Optics - Comprehensive Test Script for Windows
-REM ===================================================
-
 echo Lean Optics Test Suite
 echo ========================
 echo.
 
-REM Track test results
 set total_tests=0
 set passed_tests=0
 set failed_tests=0
 
-REM Function to run a test and report results
+goto :main
+
 :run_test
 set test_name=%~1
 set test_command=%~2
-
 echo Running: %test_name%
 %test_command%
 if %errorlevel% equ 0 (
-    echo [OK] %test_name% passed
+    echo [OK] %test_name%
     set /a passed_tests+=1
 ) else (
-    echo [FAIL] %test_name% failed
+    echo [FAIL] %test_name%
     set /a failed_tests+=1
 )
 set /a total_tests+=1
-goto :eof
+exit /b 0
 
-REM Test 1: Basic compilation
-call :run_test "Basic Compilation" "lake build"
+:main
+call :run_test "Library build" "lake build"
+call :run_test "Test libraries" "lake build tests testsAdvanced"
+call :run_test "CLI help" "lake exe lean-optics help"
+call :run_test "CLI version" "lake exe lean-optics version"
+call :run_test "Test runner" "lake exe test-runner"
+call :run_test "Advanced tests" "lake exe test-advanced"
+call :run_test "Lens tests" "lake exe test-lens"
+call :run_test "Prism tests" "lake exe test-prism"
+call :run_test "Traversal tests" "lake exe test-traversal"
+call :run_test "Compose tests" "lake exe test-compose"
+call :run_test "Benchmarks" "lake exe bench"
+call :run_test "CLI test command" "lake exe lean-optics test"
 
-REM Test 2: Run main executable
-call :run_test "Main Executable" "lake exe lean-optics help"
-
-REM Test 3: Version check
-call :run_test "Version Check" "lake exe lean-optics version"
-
-REM Test 4: Test runner
-call :run_test "Test Runner" "lake exe test-runner"
-
-REM Test 5: Individual test modules
-call :run_test "Lens Tests" "lake exe test-lens"
-call :run_test "Prism Tests" "lake exe test-prism"
-call :run_test "Traversal Tests" "lake exe test-traversal"
-call :run_test "Composition Tests" "lake exe test-compose"
-
-REM Test 6: Benchmarks (if available)
-lake exe bench >nul 2>&1
-if %errorlevel% equ 0 (
-    call :run_test "Benchmarks" "lake exe bench"
-)
-
-REM Test 7: Documentation generation
-call :run_test "Documentation" "lake build docs"
-
-REM Report results
 echo.
 echo ==========================================
 echo TEST SUITE RESULTS
@@ -67,7 +49,7 @@ echo Passed: %passed_tests%
 echo Failed: %failed_tests%
 
 if %failed_tests% equ 0 (
-    echo [SUCCESS] ALL TESTS PASSED!
+    echo [SUCCESS] ALL TESTS PASSED
     exit /b 0
 ) else (
     echo [FAILURE] SOME TESTS FAILED

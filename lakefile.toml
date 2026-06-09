@@ -5,3 +5,71 @@ homepage = "https://github.com/fraware/lean-optics"
 keywords = ["lean4", "optics", "lens", "prism", "traversal", "profunctor"]
 license = "MIT"
 readmeFile = "README.md"
+defaultTargets = ["Optics"]
+
+[[require]]
+name = "batteries"
+git = "https://github.com/leanprover-community/batteries"
+rev = "v4.31.0-rc1"
+
+[[lean_lib]]
+name = "Optics"
+srcDir = "src"
+
+[[lean_lib]]
+name = "tests"
+srcDir = "."
+globs = ["tests.Common", "tests.Runner", "tests.Lens.Basic", "tests.Prism.Basic", "tests.Traversal.Basic", "tests.Compose.Basic", "tests.Integration", "tests.Records.Basic"]
+
+[[lean_lib]]
+name = "testsAdvanced"
+srcDir = "."
+globs = ["tests.Advanced.NestedRecords", "tests.Advanced.ComplexPrismComposition", "tests.Advanced.RefactorSemantics", "tests.Advanced.Runner"]
+
+[[lean_exe]]
+name = "lean-optics"
+root = "Main"
+srcDir = "."
+needs = ["tests"]
+
+[[lean_exe]]
+name = "test-lens"
+root = "tests.Lens.Main"
+srcDir = "."
+needs = ["tests"]
+
+[[lean_exe]]
+name = "test-prism"
+root = "tests.Prism.Main"
+srcDir = "."
+needs = ["tests"]
+
+[[lean_exe]]
+name = "test-traversal"
+root = "tests.Traversal.Main"
+srcDir = "."
+needs = ["tests"]
+
+[[lean_exe]]
+name = "test-compose"
+root = "tests.Compose.Main"
+srcDir = "."
+needs = ["tests"]
+
+[[lean_exe]]
+name = "test-runner"
+root = "tests.TestRunner"
+srcDir = "."
+needs = ["tests"]
+
+[[lean_exe]]
+name = "test-advanced"
+root = "tests.Advanced.Main"
+srcDir = "."
+needs = ["testsAdvanced"]
+
+[[lean_exe]]
+name = "bench"
+root = "bench.Bench"
+srcDir = "."
+needs = ["tests"]

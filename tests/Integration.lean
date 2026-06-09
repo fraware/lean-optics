@@ -1,146 +1,49 @@
 /-
 # Integration Tests
-
-This module tests the complete integration of all optics components.
 -/
 
 import Optics
+import Optics.Experimental
+import tests.Common
 
--- Test data structures
-structure Address where
-  street : String
-  city : String
-  zip : String
+open Optics Tests.Common
 
-structure Person where
-  name : String
-  age : Nat
-  email : String
-  address : Address
+#eval nameLens.get testPerson
+#eval nameLens.set testPerson "Bob"
+#eval nameLens.over (fun n => n.toUpper) testPerson
+#eval streetLens'.get testPersonWithAddress
+#eval streetLens'.set testPersonWithAddress "456 Oak Ave"
+#eval optionPrism.preview (some "hello")
+#eval optionPrism.preview (none : Option String)
+#eval optionPrism.build "world"
+#eval Id.run do listTraversal.traverse (fun x => pure (x + 1)) [1, 2, 3]
+#eval listTraversal.traverse (fun x => some (x + 1)) [1, 2, 3]
+#eval lensPrismComp.get (some testPerson)
+#eval lensPrismComp.set (some testPerson) "Bob"
 
-structure Company where
-  name : String
-  address : Address
-  employees : List Person
+theorem streetLens'_wellFormed : Lens.WellFormed streetLens' :=
+  Lens.comp_preserves_laws personAddressLens streetLens
+    (Lens.lawful_wellFormed PersonWithAddress.addressLens)
+    (Lens.lawful_wellFormed Address.streetLens)
 
--- Test lenses
-def nameLens : Lens Person String :=
-  lens! Person.name (fun p n => { p with name := n })
+theorem optionPrism_wellFormed : Prism.WellFormed (optionPrism : Prism (Option String) String) := by
+  refine ⟨?_, ?_, ?_⟩
+  · intro a; simp [optionPrism]
+  · intro s a h
+    cases s with
+    | none => simp [optionPrism] at h
+    | some s' => simp [optionPrism] at h; cases h; rfl
+  · intro s s' h
+    cases s with
+    | none => simp [optionPrism] at h; cases h; rfl
+    | some _ => simp [optionPrism] at h
 
-def ageLens : Lens Person Nat :=
-  lens! Person.age (fun p a => { p with age := a })
+theorem listTraversal_wellFormed : Traversal.WellFormed (listTraversal : Traversal (List Nat) Nat) := by
+  trivial
 
-def addressLens : Lens Person Address :=
-  lens! Person.address (fun p a => { p with address := a })
-
-def streetLens : Lens Address String :=
-  lens! Address.street (fun a s => { a with street := s })
-
-def employeesLens : Lens Company (List Person) :=
-  lens! Company.employees (fun c e => { c with employees := e })
-
--- Test prisms
-def maybePrism {A : Type} : Prism (Option A) A :=
-  prism! (fun x => match x with | some a => Sum.inl a | none => Sum.inr none) some
-
--- Test traversals
-def listTraversal {A : Type} : Traversal (List A) A :=
-  traversal! (fun {F} [Applicative F] f xs =>
-    match xs with
-    | [] => pure []
-    | x :: xs => do
-      let y â† f x
-      let ys â† listTraversal.traverse f xs
-      pure (y :: ys))
-
--- Test data
-def testAddress : Address :=
-  { street := "123 Main St", city := "Anytown", zip := "12345" }
-
-def testPerson : Person :=
-  { name := "Alice", age := 30, email := "alice@example.com", address := testAddress }
-
-def testCompany : Company :=
-  { name := "Acme Corp", address := testAddress, employees := [testPerson] }
-
--- Test lens operations
-#eval nameLens.get testPerson  -- "Alice"
-#eval nameLens.set testPerson "Bob"  -- { name := "Bob", ... }
-#eval nameLens.over testPerson (fun n => n.toUpper)  -- { name := "ALICE", ... }
-
--- Test lens composition
-def streetLens' : Lens Person String :=
-  streetLens âˆ˜â‚— addressLens
-
-#eval streetLens'.get testPerson  -- "123 Main St"
-#eval streetLens'.set testPerson "456 Oak Ave"  -- { ..., address := { street := "456 Oak Ave", ... } }
-
--- Test prism operations
-#eval maybePrism.preview (some "hello")  -- some "hello"
-#eval maybePrism.preview none  -- none
-#eval maybePrism.build "world"  -- some "world"
-
--- Test traversal operations
-#eval listTraversal.traverse (fun x => x + 1) [1, 2, 3]  -- [2, 3, 4]
-#eval listTraversal.traverse (fun x => some (x + 1)) [1, 2, 3]  -- some [2, 3, 4]
-
--- Test mixed composition
-def lensPrismComp : Lens (Option Person) String :=
-  lens_prism_comp (lens! (fun p => p.name) (fun p n => { p with name := n })) maybePrism "Unknown"
-
-#eval lensPrismComp.get (some testPerson)  -- "Alice"
-#eval lensPrismComp.set (some testPerson) "Bob"  -- some { name := "Bob", ... }
-
--- Test law preservation
-theorem streetLens'_laws : Lens.WellFormed streetLens' := by
-  constructor
-  Â· -- get_put
-    intro p s
-    simp [streetLens', Lens.comp, Lens.get_put]
-  Â· constructor
-    Â· -- put_get
-      intro p
-      simp [streetLens', Lens.comp, Lens.put_get]
-    Â· -- put_put
-      intro p s1 s2
-      simp [streetLens', Lens.comp, Lens.put_put]
-
-theorem maybePrism_laws : Prism.WellFormed maybePrism := by
-  constructor
-  Â· -- match_build
-    intro a
-    simp [maybePrism, Prism.match_build]
-  Â· constructor
-    Â· -- build_match
-      intro s h
-      simp [maybePrism, Prism.build_match] at h
-      cases h with
-      | inl h' => simp [h']
-      | inr h' => simp [h']
-    Â· -- no_match_id
-      intro s h
-      simp [maybePrism, Prism.no_match_id] at h
-      cases h with
-      | inl h' => simp [h']
-      | inr h' => simp [h']
-
-theorem listTraversal_laws : Traversal.WellFormed listTraversal := by
-  constructor
-  Â· -- identity_law
-    intro xs
-    simp [listTraversal, Traversal.identity_law]
-  Â· constructor
-    Â· -- composition_law
-      intro F G _ _ f g xs
-      simp [listTraversal, Traversal.composition_law]
-    Â· -- naturality_law
-      intro F G _ _ f g h xs
-      simp [listTraversal, Traversal.naturality_law]
-
--- Test that everything compiles and runs
-def main : IO Unit := do
+def integrationMain : IO Unit := do
   IO.println "Integration tests passed!"
   IO.println s!"Person name: {nameLens.get testPerson}"
-  IO.println s!"Street: {streetLens'.get testPerson}"
-  IO.println s!"Maybe preview: {maybePrism.preview (some \"hello\")}"
-  IO.println s!"List traversal: {listTraversal.traverse (fun x => x + 1) [1, 2, 3]}")
+  IO.println s!"Street: {streetLens'.get testPersonWithAddress}"
+  IO.println s!"Maybe preview: {optionPrism.preview (some "hello")}"
+  IO.println s!"List traversal: {Id.run do listTraversal.traverse (fun x => pure (x + 1)) [1, 2, 3]}"

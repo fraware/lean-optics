@@ -1,7 +1,7 @@
 /-
 # Macros for Creating Optics
 
-`lens!`, `prism!`, and `traversal!` expand to the corresponding `mk` constructors.
+`lens!`, `prism!`, and `traversal!` expand to the corresponding `of` constructors.
 -/
 
 import Lean
@@ -12,12 +12,12 @@ import Optics.Concrete.Traversal
 namespace Optics
 
 macro "lens!" get:term set:term : term =>
-  `(Lens.mk $get $set)
+  `(Lens.of $get $set)
 
 macro "prism!" m:term b:term : term =>
-  `(Prism.mk $m $b)
+  `(Prism.of $m $b)
 
 macro "traversal!" tr:term : term =>
-  `(Traversal.mk $tr)
+  `(Traversal.of $tr)
 
 end Optics

@@ -1,20 +1,12 @@
 /-
 # Traversal Test Main
-
-This is the main entry point for running traversal tests.
 -/
 
-import Tests.Traversal.Basic
-import Tests.TestRunner
+import tests.Traversal.Basic
+import tests.Runner
 
-def main : IO Unit := do
+def main : IO UInt32 := do
   IO.println "Running Traversal Tests..."
-  let runner â† runTraversalTests
+  let runner ← runTraversalTests
   runner.report
-
-  if runner.passed == runner.total then
-    IO.println "All traversal tests passed! ðŸŽ‰"
-    System.Exit.exit 0
-  else
-    IO.println "Some traversal tests failed! âŒ"
-    System.Exit.exit 1
+  if runner.passed == runner.total then return 0 else return 1

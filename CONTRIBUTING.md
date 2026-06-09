@@ -6,7 +6,7 @@ Thank you for your interest in contributing to Lean Optics! This document provid
 
 ### Prerequisites
 
-- Lean 4 (version 4.8.0 or later)
+- Lean 4.31 (`lean-toolchain` pins `v4.31.0-rc1`)
 - Lake package manager
 - Git
 
@@ -132,7 +132,7 @@ Releases are managed through GitHub Actions:
    ```
 
 2. **Update version numbers**
-   - Update `Lakefile.lean`
+   - Update `lakefile.toml`
    - Update `Main.lean`
    - Update documentation
 
