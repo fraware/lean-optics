@@ -5,7 +5,7 @@
 `lean-optics` is a Lean 4 package that implements profunctor-style optics:
 `Lens`, `Prism`, `Traversal`, plus law-preserving composition.
 
-[![Lean 4](https://img.shields.io/badge/Lean%204-v4.31.0--rc1-blue.svg)](https://leanprover.github.io/)
+[![Lean 4](https://img.shields.io/badge/Lean%204-v4.31.0-blue.svg)](https://leanprover.github.io/)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 
 </div>
@@ -52,7 +52,7 @@ def renamed : Person :=
   nameLens.over (fun n => n.toUpper) { name := "Alice", age := 30 }
 ```
 
-See `Optics.Examples.LawfulLens` for a complete upstream extraction example.
+See `Optics.Examples.LawfulLens` and `Optics.Examples.MachineState` for upstream extraction examples. The CSLib proposal lives at `docs/upstream/CSLIB_LENS_PROPOSAL.md`.
 
 ## Build and verify
 

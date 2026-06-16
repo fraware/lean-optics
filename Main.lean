@@ -22,7 +22,7 @@ def showHelp : IO Unit := do
 
 def showVersion : IO Unit := do
   IO.println "Lean Optics v0.1.0"
-  IO.println "Built with Lean 4.31.0-rc1"
+  IO.println "Built with Lean 4.31.0"
 
 def showInfo : IO Unit := do
   IO.println "Lean Optics - Library Information"

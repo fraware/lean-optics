@@ -11,6 +11,7 @@ on:
 env:
   REGISTRY: ghcr.io
   IMAGE_NAME: fraware/lean-optics
+  LEAN_NUM_THREADS: "1"
 
 concurrency:
   group: ci-${{ github.ref }}

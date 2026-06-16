@@ -1,4 +1,4 @@
-FROM leanprover/lean4:v4.31.0-rc1 AS builder
+FROM leanprover/lean4:v4.31.0 AS builder
 
 WORKDIR /opt/lean-optics
 COPY . .

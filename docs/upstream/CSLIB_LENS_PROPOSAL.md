@@ -16,7 +16,12 @@ The API should be small enough to review in one sitting and strong enough to sup
 - `over` applies a function to the focused component without naming the intermediate value.
 - Composition chains nested field access (for example, state → memory cell → value).
 
-This is the same core carried in this repository by `Optics.Concrete.Lens` and `Optics.Examples.LawfulLens`: a proof-free `Lens` for construction, a `LawfulLens` bundle for verification, `Lens.over`, and `Lens.comp` (written `∘ₗ`).
+This is the same core carried in this repository by `src/Optics/Concrete/Lens.lean` and the example modules below: a proof-free `Lens` for construction, a `LawfulLens` bundle for verification, `Lens.over`, and `Lens.comp` (written `∘ₗ`).
+
+| Example | Path | Import |
+|---------|------|--------|
+| Person record (field lenses) | `src/Optics/Examples/LawfulLens.lean` | `import Optics.Examples.LawfulLens` |
+| Machine interpreter state | `src/Optics/Examples/MachineState.lean` | `import Optics.Examples.MachineState` |
 
 ## Why CSLib
 
@@ -65,7 +70,9 @@ structure MachineState where
   halted : Bool
 ```
 
-For instance, a lawful lens for `pc` and an `over` that increments the program counter while leaving `memory` and `halted` unchanged. The `Person` record example in `Optics.Examples.LawfulLens` in this repository shows the same proof pattern: field projection, `with` update, and `rfl` for each law.
+For instance, a lawful lens for `pc` and an `over` that increments the program counter while leaving `memory` and `halted` unchanged. See `src/Optics/Examples/MachineState.lean` (`import Optics.Examples.MachineState`): macro-free `LawfulLens` values for `pc`, `memory`, and `halted`, plus a verified `step` that advances `pc` with proofs that `memory` and `halted` are preserved.
+
+The `Person` record example in `src/Optics/Examples/LawfulLens.lean` (`import Optics.Examples.LawfulLens`) shows the same proof pattern: field projection, `with` update, and `rfl` for each law.
 
 Frame the contribution as **state access infrastructure**, not category theory — aligned with CSLib maintainer expectations. The goal is dependable record update for verified CS code, not a general optics library.
 
