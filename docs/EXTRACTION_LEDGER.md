@@ -11,7 +11,7 @@ Tracks upstream extraction candidates from `lean-optics` toward CSLib and Mathli
 | Lens composition (`∘ₗ`, `lens_comp_preserves_laws`) | `Optics.Compose` | Ready |
 | State-record update example (no macros) | `Optics.Examples.LawfulLens` | Ready |
 | Machine interpreter state example | `Optics.Examples.MachineState` | Ready |
-| CSLib upstream proposal | `docs/upstream/CSLIB_LENS_PROPOSAL.md` | Ready |
+| CSLib upstream proposal | `docs/upstream/CSLIB_LENS_PROPOSAL.md` | Draft PR [cslib#659](https://github.com/leanprover/cslib/pull/659), discussion [cslib#658](https://github.com/leanprover/cslib/issues/658) |
 | Macro-free test fixtures | `tests.Common` | Ready |
 | `derive_lens` / `derive_lenses` | `Optics.Stdlib.Records` | Ready |
 | `Lens.of` / `Prism.of` / `Traversal.of` | concrete modules | Ready |

@@ -40,6 +40,10 @@ This repository’s profunctor optics, macros, `optic_laws!`, telemetry, and ben
 
 ## CSLib next step
 
+Discussion issue: [leanprover/cslib#658](https://github.com/leanprover/cslib/issues/658)
+
+Draft PR: [leanprover/cslib#659](https://github.com/leanprover/cslib/pull/659)
+
 Open a CSLib discussion issue or draft PR with a minimal lawful lens API and one example.
 
 The first candidate PR should include only:
