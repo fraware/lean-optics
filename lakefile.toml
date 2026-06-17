@@ -30,7 +30,6 @@ globs = ["tests.Advanced.NestedRecords", "tests.Advanced.ComplexPrismComposition
 name = "lean-optics"
 root = "Main"
 srcDir = "."
-needs = ["tests"]
 
 [[lean_exe]]
 name = "test-lens"

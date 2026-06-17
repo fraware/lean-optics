@@ -3,7 +3,6 @@
 -/
 
 import Optics
-import tests.Runner
 
 def showHelp : IO Unit := do
   IO.println "Lean Optics - profunctor optics for Lean 4"
@@ -53,11 +52,27 @@ def showExample : IO Unit := do
   IO.println "def upper (p : Person) : Person := nameLens.over (fun n => n.toUpper) p"
   IO.println "```"
 
+private def siblingExe (stem : String) : IO System.FilePath := do
+  let self ← IO.appPath
+  let dir ← match self.parent with
+    | some dir => pure dir
+    | none => throw (IO.userError "cannot resolve executable directory")
+  let ext := self.extension.getD ""
+  return if ext.isEmpty then dir / stem else dir / (stem ++ "." ++ ext)
+
 def runTests : IO UInt32 := do
   IO.println "Running Lean Optics test suite..."
-  let runner ← runAllTests
-  runner.report
-  if runner.passed == runner.total then return 0 else return 1
+  let testRunner ← siblingExe "test-runner"
+  unless ← testRunner.pathExists do
+    IO.eprintln s!"Test runner not found at {testRunner}; run `lake build test-runner` first"
+    return 1
+  let proc ← IO.Process.spawn {
+    cmd := testRunner.toString
+    cwd := some (← IO.currentDir)
+    stdout := .inherit
+    stderr := .inherit
+  }
+  proc.wait
 
 def runBenchmarks : IO UInt32 := do
   IO.println "Run benchmarks with: lake exe bench"
