@@ -10,6 +10,8 @@ Tracks upstream extraction candidates from `lean-optics` toward CSLib and Mathli
 | `Lens.over` API | `Optics.Lens` | Ready |
 | Lens composition (`∘ₗ`, `lens_comp_preserves_laws`) | `Optics.Compose` | Ready |
 | State-record update example (no macros) | `Optics.Examples.LawfulLens` | Ready |
+| Machine interpreter state example | `Optics.Examples.MachineState` | Ready |
+| CSLib upstream proposal | `docs/upstream/CSLIB_LENS_PROPOSAL.md` | Ready |
 | Macro-free test fixtures | `tests.Common` | Ready |
 | `derive_lens` / `derive_lenses` | `Optics.Stdlib.Records` | Ready |
 | `Lens.of` / `Prism.of` / `Traversal.of` | concrete modules | Ready |
@@ -32,8 +34,8 @@ Tracks upstream extraction candidates from `lean-optics` toward CSLib and Mathli
 
 ## Toolchain
 
-- Lean: `v4.31.0-rc1`
-- Batteries: `v4.31.0-rc1` (dependency retained; not required by stable API)
+- Lean: `v4.31.0`
+- Batteries: `v4.31.0` (dependency retained; not required by stable API)
 - Lake config: `lakefile.toml` (Lake 5 / Lean 4.31 declarative format)
 
 ## Verification commands

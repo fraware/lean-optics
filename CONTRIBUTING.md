@@ -6,7 +6,7 @@ Thank you for your interest in contributing to Lean Optics! This document provid
 
 ### Prerequisites
 
-- Lean 4.31 (`lean-toolchain` pins `v4.31.0-rc1`)
+- Lean 4.31 (`lean-toolchain` pins `v4.31.0`)
 - Lake package manager
 - Git
 

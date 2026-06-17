@@ -10,7 +10,7 @@ The top-level import currently exposes several layers at once: core profunctor c
 
 Current constraints:
 
-- Current toolchain in `lean-toolchain`: `leanprover/lean4:v4.8.0`.
+- Current toolchain in `lean-toolchain`: `leanprover/lean4:v4.31.0`.
 - The package depends on Batteries, not Mathlib, through a pinned commit in `Lakefile.lean`.
 - The README notes that some advanced helper commands are intentionally not implemented yet.
 - The top-level module imports automation, telemetry, and verification together with the core optics API.
