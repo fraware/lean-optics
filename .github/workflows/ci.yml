@@ -28,7 +28,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Install Lean 4
-        uses: leanprover/lean4-action@v1
+        uses: leanprover/lean-action@v1
 
       - name: Cache Lake dependencies
         uses: actions/cache@v3
