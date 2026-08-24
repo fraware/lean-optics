@@ -27,10 +27,12 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Install Lean 4
-        uses: leanprover/lean4-action@v2
-        with:
-          lean-version: v4.34.0-rc2
+      - name: Install Lean toolchain
+        run: |
+          curl -sSf https://raw.githubusercontent.com/leanprover/elan/master/elan-init.sh | sh -s -- -y
+          echo "$HOME/.elan/bin" >> "$GITHUB_PATH"
+          "$HOME/.elan/bin/elan" install "$(cat lean-toolchain)"
+          "$HOME/.elan/bin/elan" default "$(cat lean-toolchain)"
 
       - name: Cache Lake dependencies
         uses: actions/cache@v4
