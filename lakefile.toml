@@ -10,7 +10,7 @@ defaultTargets = ["Optics"]
 [[require]]
 name = "batteries"
 git = "https://github.com/leanprover-community/batteries"
-rev = "v4.31.0"
+rev = "d54dddc581e08be364c278052863524bff7a99a9"
 
 [[lean_lib]]
 name = "Optics"
