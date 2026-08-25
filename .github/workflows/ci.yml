@@ -69,7 +69,7 @@ jobs:
       - name: Run benchmarks
         run: |
           make bench | tee bench.out
-          rg -q "operations" bench.out
+          grep -q "operations" bench.out
 
   security:
     name: Security and SBOM
