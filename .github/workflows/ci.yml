@@ -74,6 +74,8 @@ jobs:
 
       - name: Secrets scan
         uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Build local image for scanning
         run: docker build -t lean-optics:ci .
