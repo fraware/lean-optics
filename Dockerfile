@@ -1,9 +1,25 @@
-FROM leanprover/lean4:v4.31.0 AS builder
+FROM ubuntu:24.04 AS builder
+
+# The former leanprover/lean4:v4.31.0 Docker Hub image is unavailable.
+# Elan resolves the project's explicitly pinned lean-toolchain release.
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+        ca-certificates curl git build-essential && \
+    rm -rf /var/lib/apt/lists/*
+
+ENV ELAN_HOME=/opt/elan
+ENV PATH="/opt/elan/bin:${PATH}"
+
+RUN curl -fsSL https://elan.lean-lang.org/elan-init.sh -o /tmp/elan-init.sh && \
+    sh /tmp/elan-init.sh -y --default-toolchain none && \
+    rm /tmp/elan-init.sh
 
 WORKDIR /opt/lean-optics
 COPY . .
 
-RUN lake update && \
+RUN elan toolchain install "$(tr -d '\\r\\n' < lean-toolchain)" && \
+    lake --version && \
+    lake update && \
     lake build && \
     lake build lean-optics test-runner bench tests testsAdvanced
 
