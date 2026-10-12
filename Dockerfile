@@ -17,7 +17,7 @@ RUN curl -fsSL https://elan.lean-lang.org/elan-init.sh -o /tmp/elan-init.sh && \
 WORKDIR /opt/lean-optics
 COPY . .
 
-RUN elan toolchain install "$(tr -d '\\r\\n' < lean-toolchain)" && \
+RUN elan toolchain install "$(head -n 1 lean-toolchain)" && \
     lake --version && \
     lake update && \
     lake build && \
