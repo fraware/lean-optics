@@ -61,7 +61,7 @@ test-comprehensive: dev ## Run comprehensive test suite
 	@echo "$(GREEN)Running comprehensive test suite...$(NC)"
 	@echo ""
 	@if [ -f scripts/test.sh ]; then \
-		./scripts/test.sh; \
+		bash scripts/test.sh; \
 	elif [ -f scripts/test.bat ]; then \
 		scripts/test.bat; \
 	else \

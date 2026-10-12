@@ -41,6 +41,11 @@ jobs:
       - name: Install dependencies
         run: lake build
 
+      - name: Install ripgrep for quality scripts
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y ripgrep
+
       - name: Placeholder and stub scan
         run: |
           chmod +x scripts/ci/check_placeholders.sh
@@ -71,15 +76,19 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Gitleaks PR history scan needs the base commit's parent
 
       - name: Secrets scan
         uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Build local image for scanning
         run: docker build -t lean-optics:ci .
 
       - name: Container scan
-        uses: aquasecurity/trivy-action@0.24.0
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
         with:
           image-ref: lean-optics:ci
           format: table
