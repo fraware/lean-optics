@@ -76,6 +76,8 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Gitleaks PR history scan needs the base commit's parent
 
       - name: Secrets scan
         uses: gitleaks/gitleaks-action@v2
